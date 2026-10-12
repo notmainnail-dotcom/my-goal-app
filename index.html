@@ -44,6 +44,17 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .macro b{display:inline;font-size:16px}
 .macro .bar{height:6px;border-radius:9px;background:rgba(255,255,255,.25);margin-top:6px;overflow:hidden}
 .macro .bar i{display:block;height:100%;background:#fff;border-radius:9px}
+.macro>div[data-a]{cursor:pointer}
+.hbtn{display:block;width:100%;border:0;border-radius:14px;padding:12px;background:rgba(255,255,255,.95);color:#be123c;font-weight:800}
+.rc{border-top:1px solid var(--bd);padding:14px 0}
+.rc:first-child{border-top:0}
+.rc .rh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rc .rh b{font-size:16px}
+.rc .rh small{flex:none;color:var(--mu);font-size:12px;font-weight:700}
+.rc p{margin:6px 0 0;font-size:14px}
+.rm{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rm span{background:var(--soft);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:700;color:var(--mu)}
+.rm span.on{background:var(--ac);color:#fff}
 .ring{position:relative;flex:none}
 .ring svg{display:block;transform:rotate(-90deg)}
 .ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800}
@@ -215,6 +226,29 @@ const FOODS=[
 ['Борщ',50,2.5,2.5,4.5,'тарелка',300],['Суп куриный с лапшой',45,3,1.5,5,'тарелка',300],['Плов',190,7,8,23,'тарелка',300],
 ['Пицца',250,11,10,29,'кусок',120],['Шаурма',230,11,12,20,'шт',350],['Бургер',260,13,13,23,'шт',220],['Чипсы',536,6,33,51,'пачка',70],
 ['Сок апельсиновый',45,0.7,0.1,10.4,'стакан',250],['Сладкая газировка',42,0,0,10.6,'банка',330]];
+// «Как добрать»: [название, время, [[продукт из FOODS, грамм]…], как сделать]. Калории считаются из FOODS.
+const RECIPES=[
+['Домашний гейнер','5 минут',[['Молоко 3,2%',300],['Банан',120],['Овсяные хлопья сухие',50],['Арахисовая паста',20]],'Всё в блендер на минуту. Без блендера: хлопья залить молоком на 5 минут, банан размять вилкой и перемешать.'],
+['Творог с бананом и мёдом','5 минут',[['Творог 9%',200],['Банан',120],['Мёд',10]],'Банан порезать кружками, смешать с творогом, полить мёдом.'],
+['Бутерброды с арахисовой пастой','5 минут',[['Хлеб белый (батон)',60],['Арахисовая паста',40],['Банан',120]],'Намазать пасту на 2 куска батона, сверху кружки банана.'],
+['Овсянка с бананом и пастой','5 минут',[['Овсяные хлопья сухие',60],['Молоко 3,2%',250],['Арахисовая паста',20],['Банан',120]],'Хлопья залить молоком, 2–3 минуты в микроволновке. Сверху паста и банан.'],
+['Протеиновый коктейль','2 минуты',[['Протеин (сывороточный)',30],['Молоко 3,2%',300]],'Встряхнуть в шейкере или бутылке. Если протеина нет, бери творог с бананом.'],
+['Лаваш с курицей и сыром','5 минут',[['Лаваш тонкий',90],['Куриная грудка варёная',100],['Сыр твёрдый',30],['Помидор',120]],'Курицу (готовую или из вчерашней) и помидор порезать, сыр натереть, завернуть в лаваш. Можно 2 минуты на сковороде.'],
+['Яичница из 3 яиц с хлебом','10 минут',[['Яйцо куриное',165],['Масло подсолнечное',10],['Хлеб ржаной',60]],'Пожарить 3 яйца на ложке масла, съесть с 2 кусками хлеба.'],
+['Салат с тунцом и яйцами','15 минут',[['Тунец консервированный',140],['Яйцо куриное',110],['Огурец',100],['Майонез',20]],'Яйца сварить 10 минут, порезать с огурцом, смешать с тунцом и ложкой майонеза.'],
+['Гречка с курицей','15 минут',[['Гречка варёная',250],['Куриная грудка варёная',150],['Масло сливочное',10]],'Сварить гречку и грудку заранее на 2–3 дня. Разогреть, добавить кусочек масла.'],
+['Макароны с тунцом','15 минут',[['Макароны варёные',250],['Тунец консервированный',140],['Масло подсолнечное',10]],'Сварить макароны, смешать с банкой тунца и ложкой масла.'],
+['Рис с яйцом','10 минут',[['Рис варёный',250],['Яйцо куриное',110],['Масло сливочное',10]],'Вчерашний рис обжарить на масле, вбить 2 яйца и перемешать.'],
+['Пельмени со сметаной','15 минут',[['Пельмени варёные',300],['Сметана 15%',40]],'Сварить пачку пельменей, 2 ложки сметаны.'],
+['Картошка со скумбрией','20 минут',[['Картофель варёный',300],['Скумбрия солёная',100],['Масло подсолнечное',10]],'Сварить картошку, полить маслом, к ней кусок солёной скумбрии.'],
+['Кефир и батон с сыром','Из магазина',[['Кефир 2,5%',500],['Хлеб белый (батон)',60],['Сыр твёрдый',40]],'Бутылка кефира и 2 бутерброда с сыром.'],
+['Арахис и изюм','Из магазина',[['Арахис',50],['Изюм',30]],'Пачка орехов и горсть изюма. Удобно держать у компьютера.'],
+['Грецкие орехи и банан','Из магазина',[['Грецкие орехи',30],['Банан',120]],'Горсть орехов и банан: лёгкий перекус с полезными жирами.'],
+['Сырки и молоко','Из магазина',[['Сырок глазированный',90],['Молоко 3,2%',250]],'2 сырка и стакан молока, если совсем нет времени. Сладко, поэтому не каждый день.'],
+['Бананы и сок','Из магазина',[['Банан',240],['Сок апельсиновый',250]],'Быстрые углеводы, например за час до зала.']];
+const RC=RECIPES.map(r=>{const it=r[2].map(([n,g])=>({x:FOODS.find(a=>a[0]==n),g}));
+const s=it.reduce((a,o)=>{const m=o.g/100;return{k:a.k+o.x[1]*m,p:a.p+o.x[2]*m,f:a.f+o.x[3]*m,c:a.c+o.x[4]*m,g:a.g+o.g}},{k:0,p:0,f:0,c:0,g:0});
+return{n:r[0],t:r[1],how:r[3],it,g:s.g,k:Math.round(s.k),p:Math.round(s.p),f:Math.round(s.f),c:Math.round(s.c)}});
 let S,tab='today',day='t',shownDay='',sheetSave=null,sheetDel=null,curFood=null,SC=null,stopTimer=null;
 
 const p=n=>String(n).padStart(2,'0');
@@ -493,7 +527,8 @@ const key=fkey(),N=norm(),D=dayFood(key),L=S.food.log[key]||[],W=S.food.weight;
 let h=head(fmtD(key),'Еда')+daySeg();
 if(!N)h+=`<div class="card"><b>Сначала норма</b><div class="mu" style="margin:4px 0 12px">Вес, рост, возраст и активность. Приложение посчитает калории и белок для набора веса.</div><button class="btn" data-a="fprof" style="margin:0">Настроить норму</button></div>`;
 else h+=`<div class="hero g3">${ring(Math.round(D.k/N.k*100),86,9,'#fff','rgba(255,255,255,.25)',20)}<div class="info"><b>${fmt(D.k)} из ${fmt(N.k)} ккал</b><p>${D.k<N.k?'Осталось '+fmt(N.k-D.k)+' ккал':'Норма набрана ✓'}</p></div>`+
-`<div class="macro">${[['Белки',D.p,N.p],['Жиры',D.f,N.f],['Углеводы',D.c,N.c]].map(m=>`<div><small>${m[0]}</small><b>${Math.round(m[1])}</b> / ${m[2]} г<div class="bar"><i style="width:${m[2]?Math.min(100,m[1]/m[2]*100):0}%"></i></div></div>`).join('')}</div></div>`;
+`<div class="macro">${[['Белки',D.p,N.p,'p'],['Жиры',D.f,N.f,'f'],['Углеводы',D.c,N.c,'c']].map(m=>`<div data-a="fhelp" data-m="${m[3]}"><small>${m[0]}</small><b>${Math.round(m[1])}</b> / ${m[2]} г<div class="bar"><i style="width:${m[2]?Math.min(100,m[1]/m[2]*100):0}%"></i></div></div>`).join('')}</div>`+
+(D.k<N.k||D.p<N.p?'<button class="hbtn" data-a="fhelp">🍳 Как добрать?</button>':'')+'</div>';
 h+=`<button class="btn" data-a="fadd">＋ Добавить еду</button><div class="row2"><button class="btn g" data-a="fdish">Мои блюда</button><button class="btn g" data-a="fcopy">Как вчера</button></div>`;
 if(L.length){h+='<div class="card">';L.forEach((e,i)=>{h+=`<div class="li"><div class="ht"><b>${esc(e.n)}</b><small>${e.g?e.g+' г · ':''}${e.t||''}${e.p||e.f||e.c?' · Б '+Math.round(e.p)+' Ж '+Math.round(e.f)+' У '+Math.round(e.c):''}</small></div><b style="white-space:nowrap;font-size:15px">${e.k} ккал</b><button class="ib" data-a="fdel" data-i="${i}" aria-label="Удалить">✕</button></div>`});h+='</div>'}
 else h+=`<div class="card mu">${day=='y'?'За вчера':'Сегодня'} пока ничего не записано.</div>`;
@@ -693,6 +728,21 @@ function dishNew(){const L=S.food.log[fkey()]||[];if(!L.length){alert('Снач�
 openSheet('Новое блюдо',`<label class="lb">Название</label><input class="in" id="f_n" placeholder="Например: мой завтрак"><label class="lb">Что входит</label><div class="chips" id="f_it">${L.map((e,i)=>`<button type="button" class="on" data-a="chip" data-i="${i}">${esc(e.n)}${e.g?' '+e.g+' г':''}</button>`).join('')}</div>`,
 ()=>{const n=$('f_n').value.trim(),sel=[...document.querySelectorAll('#f_it .on')].map(b=>L[b.dataset.i]);if(!n||!sel.length){alert('Нужно название и хотя бы одна запись');return}
 S.food.dishes.push({n,items:sel.map(noT)});toast('Блюдо сохранено');return true},null)}
+// «Как добрать»: остаток до нормы и идеи, отсортированные по выбранному нутриенту
+function gaps(){const N=norm(),D=dayFood(fkey());return N?{k:N.k-D.k,p:N.p-D.p,f:N.f-D.f,c:N.c-D.c,N}:null}
+const SHORT={'шт':'шт','ст. ложка':'ст. л.','ч. ложка':'ч. л.','мерная ложка':'мерн. л.'};
+function amt(x,g){const u=x[5],ug=x[6];if(u&&ug){const n=g/ug;if(Math.abs(n*2-Math.round(n*2))<0.01){if(SHORT[u])return fmt(n)+' '+SHORT[u];if(n==1)return '1 '+u}}return g+' г'}
+function recList(m){const G=gaps(),left=G?G[m]:0;
+return RC.map((r,i)=>[r,i]).sort((a,b)=>b[0][m]-a[0][m]).slice(0,8).map(([r,i])=>`<div class="rc"><div class="rh"><b>${esc(r.n)}</b><small>${r.t=='Из магазина'?'🛒':'⏱'} ${r.t}</small></div>`+
+(left>0&&r[m]>=left?'<span class="tag" style="--ct:rgba(16,185,129,.15);--c:var(--ok);margin:6px 0 0">закроет остаток</span>':'')+
+`<div class="mu" style="margin-top:4px">${r.it.map(o=>esc(o.x[0])+' '+amt(o.x,o.g)).join(' · ')}</div><p>${esc(r.how)}</p>`+
+`<div class="rm">${[['k',r.k+' ккал'],['p','Б '+r.p+' г'],['f','Ж '+r.f+' г'],['c','У '+r.c+' г']].map(q=>`<span class="${q[0]==m?'on':''}">${q[1]}</span>`).join('')}</div>`+
+`<button class="btn g" data-a="radd" data-i="${i}" style="margin:10px 0 0">Съел, записать</button></div>`).join('')}
+function helpSheet(m){const G=gaps();
+if(!m)m=G&&G.p/(G.N.p||1)>G.k/(G.N.k||1)?'p':'k';
+const left=G?[['k'],['p','белок'],['f','жиры'],['c','углеводы']].filter(q=>G[q[0]]>0).map(q=>q[0]=='k'?fmt(Math.round(G.k))+' ккал':q[1]+' '+Math.round(G[q[0]])+' г').join(' · '):'';
+openSheet('Как добрать',(G?`<div class="mu" style="margin-bottom:12px">${left?'Осталось: '+left:'Норма на сегодня набрана ✓'}</div>`:'')+
+seg('hm',[['k','Калории'],['p','Белок'],['f','Жиры'],['c','Углеводы']],m)+`<div id="f_rl">${recList(m)}</div><div class="hint">Состав и калории примерные. Всё из обычного магазина.</div>`,null,null)}
 function profSheet(){const P=S.food.prof||{w:'',h:'',age:'',act:'mid',goal:'gain'};
 openSheet('Норма питания',
 `<div class="row2"><div><label class="lb">Вес, кг</label><input class="in" id="f_w" inputmode="decimal" value="${lastW()||P.w}"></div><div><label class="lb">Рост, см</label><input class="in" id="f_hh" inputmode="numeric" value="${P.h}"></div><div><label class="lb">Возраст</label><input class="in" id="f_ag" inputmode="numeric" value="${P.age}"></div></div>`+
@@ -771,7 +821,8 @@ case 'tab':tab=D.t;render();window.scrollTo(0,0);return;
 case 'day':day=D.d;render();return;
 case 'seg':{if(b.classList.contains('on'))return;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x==b));whens();
 if(b.parentNode.dataset.seg=='unit'&&curFood){const n=num($('f_a').value)||0;$('f_a').value=D.v=='g'?Math.round(n*curFood.ug):+(n/curFood.ug).toFixed(1);
-$('f_al').textContent=D.v=='g'?'Сколько грамм':'Сколько ('+curFood.u+')';pv(curFood)}return}
+$('f_al').textContent=D.v=='g'?'Сколько грамм':'Сколько ('+curFood.u+')';pv(curFood)}
+if(b.parentNode.dataset.seg=='hm')$('f_rl').innerHTML=recList(D.v);return}
 case 'sw':b.parentNode.dataset.v=D.c;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x==b));return;
 case 'chip':b.classList.toggle('on');return;
 case 'fsel':b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x==b));return;
@@ -794,6 +845,8 @@ case 'mday':b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggl
 case 'mnote':S.moodNote=today();break;
 // еда
 case 'fadd':foodSheet();return;
+case 'fhelp':helpSheet(D.m);return;
+case 'radd':{const r=RC[D.i];addEntries(fkey(),[{n:r.n,g:r.g,k:r.k,p:r.p,f:r.f,c:r.c}]);closeSheet();toast('Записано: '+r.k+' ккал');break}
 case 'fpick':amountSheet(D.id);return;
 case 'fnew':customSheet();return;
 case 'fquick':quickSheet();return;
