@@ -1,5 +1,5 @@
 // Офлайн-режим: сначала сеть (чтобы обновления приходили), без сети — сохранённая копия.
-const C = 'kurs-v2';
+const C = 'kurs-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -8,7 +8,8 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))));
+  // удаляем только свои старые кэши: на том же домене github.io живёт приложение английского
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('kurs-') && k !== C).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 
