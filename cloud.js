@@ -2,7 +2,7 @@
 // Файл общий для моих приложений: на одном домене github.io вход тоже общий (сессия в localStorage).
 // Supabase → Project Settings → API: Project URL и anon (publishable) key. Ключ открытый, данные защищает RLS.
 // Ключ service_role сюда не вставлять никогда: он обходит RLS.
-const CLOUD={url:'',key:''};
+const CLOUD={url:'https://ixvqhsahavrfsbrljkcy.supabase.co',key:'sb_publishable_XzQ-YfaOkrAnltLW6u34eQ_hycHsMt9'};
 
 const Cloud=(()=>{
 const AK='cloud_auth',VK='cloud_pkce';
