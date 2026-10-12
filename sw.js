@@ -1,6 +1,6 @@
 // Офлайн-режим: сначала сеть (чтобы обновления приходили), без сети — сохранённая копия.
-const C = 'kurs-v3';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+const C = 'kurs-v4';
+const FILES = ['./', './index.html', './cloud.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(FILES)));
@@ -14,7 +14,8 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  // только свои файлы: запросы к Supabase (данные, токены) не кэшируем
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(r => {

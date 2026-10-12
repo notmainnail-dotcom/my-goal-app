@@ -20,6 +20,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .top{margin:4px 2px 14px}
 .top small{color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.6px;font-size:12px}
 h1{font-size:32px;margin:2px 0 0;letter-spacing:-.7px;font-weight:800}
+.th{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.spill{flex:none;border:0;border-radius:99px;padding:6px 11px;font-size:12px;font-weight:800;background:var(--soft);color:var(--mu);white-space:nowrap;display:flex;align-items:center;gap:6px}
+.spill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor}
+.spill.s-ok{background:rgba(16,185,129,.13);color:var(--ok)}
+.spill.s-net{background:rgba(245,158,11,.15);color:var(--amt)}
+.spill.s-err{background:rgba(244,63,94,.13);color:var(--wr)}
+.spill.s-out{background:rgba(99,102,241,.12);color:var(--ac)}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);margin:26px 4px 10px;font-weight:800}
 .mu{color:var(--mu);font-size:14px}
 .card{background:var(--card);border-radius:22px;padding:16px;margin:0 0 12px;box-shadow:var(--sh);border:1px solid var(--bd)}
@@ -163,6 +170,7 @@ nav button.on{color:var(--ac);background:rgba(99,102,241,.13)}
 <div id="sh"></div>
 <div id="stop"></div>
 <div id="toast"></div>
+<script src="cloud.js"></script>
 <script>
 const K='life_v1';
 const COLORS=['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316','#f59e0b','#10b981','#06b6d4','#3b82f6','#64748b'];
@@ -252,9 +260,144 @@ o.stop=Object.assign({why:'',alts:DEF_ALTS.slice(),presses:[]},o.stop||{});
 o.food=Object.assign({prof:null,kcal:0,custom:[],dishes:[],log:{},weight:[]},o.food||{});
 // цели с шагами привязываем к якорям, чтобы следующий шаг был виден прямо в карточке привычки
 o.goals.forEach(g=>{if(g.type=='steps'&&!('h' in g)){const m=/англ/i.test(g.t)?'en':/сет/i.test(g.t)?'net':'';g.h=o.habits.some(x=>x.id==m)?m:''}});
+// у целей постоянный id для синхронизации; старым даём g0, g1…, чтобы на разных устройствах они совпали
+o.goals.forEach((g,i)=>{if(!g.id){let j=i;while(o.goals.some(x=>x.id=='g'+j))j++;g.id='g'+j}});
 o.v=3;return o}
 function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}S=S&&S.v?migrate(S):init()}
-function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Не удалось сохранить')}}
+function store(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Не удалось сохранить')}}
+function save(){store();syncSoon()}
+
+// ---------- синхронизация ----------
+// localStorage остаётся главным, облако (таблица habits) — копия. В облаке S лежит построчно: одна строка = одна запись
+// (привычка, отметка дня, настроение дня, еда дня, цель, настройки). Конфликт решается по строке: новее updated_at — побеждает.
+// Удаление = deleted, строка не стирается. Красная кнопка, тема и дата текстовой копии в облако не идут.
+if(typeof Cloud=='undefined')window.Cloud={on:()=>false,user:()=>null,ready:Promise.resolve()}; // cloud.js не загрузился: работаем как раньше
+const SK='life_sync',SEED=Date.parse('2000-01-01T00:00:00Z');
+// M = {uid, cur: synced_at последней забранной строки, r: {ключ: [отпечаток, время правки, флаги: 1 удалена, 2 ждёт отправки]}}
+let M=null,syncSt='',syncMsg='',syncAt=0,syncBusy=false,syncAgain=false,syncT=null;
+try{M=JSON.parse(localStorage.getItem(SK))}catch(e){}
+const saveM=()=>{try{localStorage.setItem(SK,JSON.stringify(M))}catch(e){}};
+
+function rowsOf(o){
+const R={cfg:{start:o.start,shift:o.shift,moodNote:o.moodNote,shelf:o.shelf},debt:o.debt,
+food:{prof:o.food.prof,kcal:o.food.kcal,custom:o.food.custom,dishes:o.food.dishes,weight:o.food.weight}};
+o.habits.forEach((x,i)=>R['h:'+x.id]=Object.assign({o:i},x));
+o.goals.forEach((g,i)=>R['g:'+g.id]=Object.assign({o:i},g));
+for(const d in o.logs)for(const h in o.logs[d])R['l:'+d+':'+h]=o.logs[d][h];
+for(const d in o.mood)R['m:'+d]=o.mood[d];
+for(const d in o.food.log)if(o.food.log[d].length)R['f:'+d]=o.food.log[d];
+return R}
+// обратно из строк в S; то, что живёт только на устройстве, берём из loc
+function fromRows(R,loc){const c=R.cfg||{},f=R.food||{};
+const o={v:3,start:c.start||today(),shift:c.shift||null,moodNote:c.moodNote||null,shelf:c.shelf||[],debt:R.debt||{total:0,paid:[]},
+theme:loc.theme,bk:loc.bk,stop:loc.stop,logs:{},mood:{},
+food:{prof:f.prof||null,kcal:f.kcal||0,custom:f.custom||[],dishes:f.dishes||[],weight:f.weight||[],log:{}}};
+const list=p=>Object.keys(R).filter(k=>k.startsWith(p)).map(k=>R[k]).sort((a,b)=>a.o-b.o||(a.id<b.id?-1:1)).map(x=>{const y=Object.assign({},x);delete y.o;return y});
+o.habits=list('h:');o.goals=list('g:');
+for(const k in R){if(k.startsWith('l:')){const d=k.slice(2,12);(o.logs[d]=o.logs[d]||{})[k.slice(13)]=R[k]}
+else if(k.startsWith('m:'))o.mood[k.slice(2)]=R[k];else if(k.startsWith('f:'))o.food.log[k.slice(2)]=R[k]}
+return o}
+
+// отпечаток записи (cyrb53 от JSON с отсортированными ключами): так видно, что поменялось, без второй копии данных
+const canon=v=>v==null?'null':typeof v!='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(canon).join(',')+']':
+'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canon(v[k])).join(',')+'}';
+function hh(v){const s=canon(v);let a=0xdeadbeef,b=0x41c6ce57;
+for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}
+a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);
+return 4294967296*(2097151&b)+(a>>>0)}
+
+// что поменялось с прошлой проверки: новые и изменённые строки ждут отправки, исчезнувшие помечаются удалёнными
+function scan(){if(!M)return;const R=rowsOf(S),t=Date.now();let n=0;
+for(const k in R){const h=hh(R[k]),m=M.r[k];if(!m||m[0]!==h){M.r[k]=[h,m?Math.max(t,m[1]+1):t,2];n++}}
+for(const k in M.r){const m=M.r[k];if(!(k in R)&&!(m[2]&1)){M.r[k]=[0,Math.max(t,m[1]+1),3];n++}}
+if(n)saveM()}
+const waiting=()=>M?Object.values(M.r).filter(m=>m[2]&2).length:0;
+
+// первый вход на устройстве. Здесь уже есть прогресс: выгружаем всё со старой меткой времени,
+// чтобы при совпадении записей главным было облако. Устройство чистое: просто забираем облако.
+function bind(uid){if(M&&M.uid==uid)return;
+M={uid,cur:null,r:{}};
+if(localStorage.getItem(K)===null)M.fresh=1;
+else{M.first=1;const R=rowsOf(S);for(const k in R)M.r[k]=[hh(R[k]),SEED,2]}
+saveM()}
+
+const SEL='habits?select=id,data,deleted,updated_at,synced_at',pq=s=>'"'+String(s).replace(/["\\]/g,'\\$&')+'"';
+// всё, что пришло на сервер после прошлого раза (с минутой внахлёст), страницами по 1000
+async function pull(){
+const rows=[];let after=M.cur?new Date(Date.parse(M.cur)-6e4).toISOString():null,id=null;
+for(;;){let p=SEL+'&order=synced_at.asc,id.asc&limit=1000';
+if(id!==null)p+='&or='+encodeURIComponent(`(synced_at.gt.${pq(after)},and(synced_at.eq.${pq(after)},id.gt.${pq(id)}))`);
+else if(after)p+='&synced_at=gt.'+encodeURIComponent(after);
+const part=await Cloud.rest('GET',p);rows.push(...part);
+if(part.length<1000)return rows;
+const z=part[part.length-1];after=z.synced_at;id=z.id}}
+
+// правки с других устройств: берём строку, если она новее нашей (при равном времени — облачную)
+function apply(rows){let R=null;
+if(M.fresh&&rows.length){R={};M.r={}}
+for(const r of rows){const u=Date.parse(r.updated_at),h=r.deleted?0:hh(r.data),m=M.r[r.id];
+if(m&&u<m[1])continue;
+if(m&&u==m[1]&&h===m[0]){m[2]&=~2;continue}
+M.r[r.id]=[h,u,r.deleted?1:0];
+if((m?m[0]:0)===h)continue;
+R=R||rowsOf(S);if(r.deleted)delete R[r.id];else R[r.id]=r.data}
+if(M.fresh&&!R)store(); // облако пустое: закрепляем то, что есть здесь, оно и уйдёт в облако
+delete M.fresh;
+if(!R)return false;
+S=migrate(fromRows(R,S));store();return true}
+
+async function push(){
+for(;;){scan();const ks=Object.keys(M.r).filter(k=>M.r[k][2]&2).slice(0,200);if(!ks.length)return;
+const R=rowsOf(S),sent=ks.map(k=>M.r[k][1]);
+const ok=await Cloud.rest('POST','habits?on_conflict=user_id,id&select=id',ks.map(k=>{const m=M.r[k],del=!!(m[2]&1);
+return{user_id:M.uid,id:k,data:del?null:R[k],deleted:del,updated_at:new Date(m[1]).toISOString()}}),'resolution=merge-duplicates,return=representation');
+ks.forEach((k,i)=>{const m=M.r[k];if(m&&m[1]===sent[i])m[2]&=~2});saveM();
+// сервер не принял строки, у которых его версия новее (так бывает, если часы устройств разошлись): забираем его версию
+const got=new Set((ok||[]).map(r=>r.id)),lost=ks.filter(k=>!got.has(k));
+for(let i=0;i<lost.length;i+=50){if($('sh').classList.contains('open'))break;
+if(apply(await Cloud.rest('GET',SEL+'&id=in.'+encodeURIComponent('('+lost.slice(i,i+50).map(pq).join(',')+')')))){scan();render()}}
+saveM()}}
+
+async function sync(){
+if(syncBusy){syncAgain=true;return}
+const u=Cloud.on()&&Cloud.user();
+if(u)bind(u.id);
+scan();
+if(!u)return setSync(Cloud.on()?'out':'');
+if(!navigator.onLine)return setSync('net');
+syncBusy=true;setSync('sync');
+try{
+const rows=await pull();
+// открыта нижняя панель: S сейчас не трогаем, повторим позже
+if($('sh').classList.contains('open')){setTimeout(()=>syncSoon(0),1e4);return}
+scan();
+if(M.first&&rows.some(r=>!r.deleted)){
+try{localStorage.setItem(K+'_before_sync',JSON.stringify(S))}catch(e){}
+if(!confirm('В облаке уже есть данные с другого устройства.\n\nОК — где записи совпали, оставить облачные.\nОтмена — где совпали, оставить данные этого устройства.\n\nВсё, что есть только здесь, добавится в облако в любом случае.')){
+const t=Date.now();for(const k in M.r)if(M.r[k][2]&2)M.r[k][1]=t}}
+delete M.first;
+if(apply(rows)){scan();render()}
+if(rows.length){const z=rows[rows.length-1].synced_at;if(!M.cur||Date.parse(z)>=Date.parse(M.cur))M.cur=z}
+saveM();
+await push();
+syncAt=Date.now();setSync('ok')}
+catch(e){setSync(e.net?'net':Cloud.user()?'err':'out',e.message)}
+finally{syncBusy=false;if(syncAgain){syncAgain=false;syncSoon()}}}
+function syncSoon(d){clearTimeout(syncT);syncT=setTimeout(sync,d===undefined?1500:d)}
+
+// [коротко для заголовка, полностью для раздела в «Ещё»]
+const SYNC={out:['Войти','Вход не выполнен'],sync:['Обмен…','Синхронизация…'],ok:['В облаке','Синхронизировано'],net:['Офлайн','Офлайн'],err:['Ошибка','Ошибка']};
+const sst=()=>Cloud.user()?syncSt||'sync':'out';
+function setSync(st,msg){syncSt=st;syncMsg=msg||'';const p=$('spill');if(p)p.outerHTML=pill();const s=$('syncSec');if(s)s.innerHTML=syncSec()}
+const pill=()=>Cloud.on()?`<button id="spill" class="spill s-${sst()}" data-a="sgo">${SYNC[sst()][0]}</button>`:'';
+function syncSec(){
+if(!Cloud.on())return '<div class="mu" style="margin:0 4px">Не настроена: впиши адрес и ключ Supabase в начало cloud.js.</div>';
+const u=Cloud.user(),st=sst(),n=waiting(),err=syncSt=='err'&&syncMsg?`<div class="mu" style="color:var(--wr);margin-top:6px">${esc(syncMsg)}</div>`:'';
+if(!u)return `<div class="mu" style="margin:0 4px 10px">Войди, и привычки, цели, настроение, еда и долги будут на всех твоих устройствах. Красная кнопка остаётся только здесь.${err}</div><button class="btn" data-a="sin">Войти через GitHub</button>`;
+return `<div class="card"><div class="mrow"><b>${esc(u.name?'@'+u.name:'GitHub')}</b><span class="spill s-${st}">${SYNC[st][1]}</span></div>`+
+`<div class="mu" style="margin-top:6px">${syncAt?'Последний раз в '+tm(new Date(syncAt))+'. ':''}${n?'Ждут отправки: '+n+'.':'Все изменения в облаке.'}</div>`+
+(st=='net'?'<div class="mu" style="margin-top:6px">Нет сети. Всё сохраняется здесь и уйдёт в облако, когда сеть появится.</div>':'')+err+
+'</div><div class="row2"><button class="btn g" data-a="snow">Синхронизировать</button><button class="btn g" data-a="sout">Выйти</button></div>'}
 
 // ---------- месяц и график ----------
 const endD=()=>add(S.start,29);
@@ -292,7 +435,7 @@ return `<div class="ring" style="width:${sz}px;height:${sz}px"><svg width="${sz}
 `</svg><span style="font-size:${fs}px">${v}%</span></div>`}
 const seg=(name,opts,v)=>`<div class="seg" data-seg="${name}">`+opts.map(o=>`<button type="button" class="${o[0]==v?'on':''}" data-a="seg" data-v="${o[0]}">${o[1]}</button>`).join('')+'</div>';
 const val=name=>{const b=document.querySelector(`[data-seg="${name}"] .on`);return b?b.dataset.v:''};
-const head=(sub,t)=>`<div class="top"><small>${sub}</small><h1>${t}</h1></div>`;
+const head=(sub,t)=>`<div class="top"><small>${sub}</small><div class="th"><h1>${t}</h1>${pill()}</div></div>`;
 const daySeg=()=>`<div class="seg"><button class="${day=='t'?'on':''}" data-a="day" data-d="t">Сегодня</button><button class="${day=='y'?'on':''}" data-a="day" data-d="y">Вчера</button></div>`+(day=='y'?`<div class="note am">Отмечаешь за вчера, ${fmtD(ago(1))}.</div>`:'');
 const faces=(act,v)=>`<div class="faces">${[1,2,3,4,5].map(i=>`<button type="button" class="${v==i?'on':''}" style="--mc:${MC[i]}55" data-a="${act}" data-v="${i}">${MOOD[i]}</button>`).join('')}</div>`;
 
@@ -332,7 +475,7 @@ if(n>30)h+=`<button class="note in" data-a="tab" data-t="more">🏁 30 дней 
 if(n>1&&anc.length&&!anc.some(a=>Y[a.id]||T[a.id]))h+=`<div class="note wr">⚠️ Вчера был пропуск. Сегодня хватит минимума: ${anc.map(a=>esc(a.n)+' '+esc(a.L[0])).join(', ')}. Два пропуска подряд нельзя.</div>`;
 if(heavy()&&(!S.moodNote||diff(S.moodNote,t)>=7))h+=`<div class="note in">Последние две недели много тяжёлых дней. Это не слабость и не лень. Если так держится, можно поговорить с психологом или врачом, это нормальный шаг.<button class="btn g" data-a="mnote" style="margin:10px 0 0">Понял</button></div>`;
 const bd=S.bk?diff(S.bk,t):null;
-if((bd===null&&n>=3)||bd>=7)h+=`<button class="note am" data-a="tab" data-t="more">💾 ${bd===null?'Резервная копия ещё не делалась.':'Копия не делалась '+bd+' дн.'} Нажми, чтобы сделать.</button>`;
+if(!Cloud.user()&&((bd===null&&n>=3)||bd>=7))h+=`<button class="note am" data-a="tab" data-t="more">💾 ${bd===null?'Резервная копия ещё не делалась.':'Копия не делалась '+bd+' дн.'} Нажми, чтобы сделать.</button>`;
 h+=daySeg();
 S.habits.forEach(x=>h+=habCard(x,key));
 if(!S.habits.length)h+=`<button class="note in" data-a="tab" data-t="more">Привычек пока нет. Добавь их во вкладке «Ещё».</button>`;
@@ -378,7 +521,7 @@ return h+'<button class="btn" data-a="egoal" data-g="-1">＋ Новая цель
 
 function vDebt(){
 const d=S.debt,paid=d.paid.reduce((a,b)=>a+b.s,0),v=d.total?Math.min(100,Math.round(paid/d.total*100)):0;
-let h=head('Только на этом телефоне','Долги');
+let h=head(Cloud.user()?'Видишь только ты':'Только на этом телефоне','Долги');
 h+=`<div class="hero g2">${ring(v,86,9,'#fff','rgba(255,255,255,.25)',20)}<div class="info"><b>Выплачено ${v}%</b><p>${d.total?'Каждая выплата сдвигает кольцо.':'Укажи общую сумму, чтобы видеть процент.'}</p></div>`+
 `<div class="stats"><div><small>Всего</small><b>${fmt(d.total)}</b></div><div><small>Выплачено</small><b>${fmt(paid)}</b></div><div><small>Осталось</small><b>${fmt(Math.max(0,d.total-paid))}</b></div></div></div>`;
 h+='<button class="btn" data-a="pay">＋ Добавить выплату</button><button class="btn g" data-a="tot">Указать общую сумму долгов</button>';
@@ -399,7 +542,8 @@ h+=`<h2>Красная кнопка</h2><div class="mu" style="margin:0 4px 10px
 h+='<h2>Полка идей</h2><div class="mu" style="margin:0 4px 10px">Новое дело берём с полки только после 30 дней стабильных якорей и только по одному.</div>';
 if(S.shelf.length){h+='<div class="card">';S.shelf.forEach((x,i)=>{h+=`<div class="li"><div class="ico" style="--ct:rgba(245,158,11,.16)">💡</div><div class="ht"><b>${esc(x)}</b></div><button class="ib" data-a="dsh" data-i="${i}" aria-label="Удалить">✕</button></div>`});h+='</div>'}
 h+='<button class="btn g" data-a="ash">＋ Добавить на полку</button>';
-h+=`<h2>Отчёт и резервная копия</h2><div class="mu" style="margin:0 4px 10px">${S.bk?'Последняя копия: '+fmtD(S.bk)+'.':'Копия ещё не делалась.'} Данные живут только в этом телефоне. Сохраняй копию в Заметки раз в неделю.</div>`+
+h+=`<h2>Синхронизация</h2><div id="syncSec">${syncSec()}</div>`;
+h+=`<h2>Отчёт и резервная копия</h2><div class="mu" style="margin:0 4px 10px">${S.bk?'Последняя копия: '+fmtD(S.bk)+'.':'Копия ещё не делалась.'} ${Cloud.user()?'Данные есть в облаке, текстовая копия — запасной вариант.':'Данные живут только в этом телефоне. Сохраняй копию в Заметки раз в неделю.'}</div>`+
 '<button class="btn" data-a="rep">Составить отчёт для Claude</button><button class="btn g" data-a="exp">Сделать резервную копию</button><button class="btn g" data-a="imp">Загрузить копию из текста</button>'+
 '<textarea class="in mono" id="io" rows="6" placeholder="Здесь появится текст. Он сразу копируется. Чтобы восстановить данные, вставь сюда копию и нажми «Загрузить»."></textarea>';
 h+=`<h2>Месяц</h2><div class="mu" style="margin:0 4px 10px">Сейчас: ${fmtD(S.start)} — ${fmtD(endD())}.</div><button class="btn g" data-a="newm">Начать новый месяц с сегодняшнего дня</button>`;
@@ -453,7 +597,7 @@ openSheet(gi>=0?'Цель':'Новая цель',
 `<div data-when="type=steps"><label class="lb">Шаги, каждый с новой строки</label><textarea class="in" id="f_s" rows="7">${esc((g.steps||[]).map(s=>s.x).join('\n'))}</textarea><div class="hint">Отметки у шагов с тем же текстом сохранятся.</div>`+
 `<label class="lb">Показывать следующий шаг в карточке</label><select class="in" id="f_h2"><option value="">Нигде</option>${opts(g.type=='steps'?g.h:'')}</select></div>`,
 ()=>{const t=$('f_t').value.trim();if(!t){alert('Напиши название');return}
-const ng={t,type:val('type')};
+const ng={id:g.id||'g'+Date.now().toString(36),t,type:val('type')};
 if(ng.type=='count'){ng.h=$('f_h').value;ng.target=Math.max(1,parseInt($('f_g').value)||1);if(!ng.h){alert('Сначала добавь привычку');return}}
 else{const old=g.steps||[];ng.h=$('f_h2').value;ng.steps=$('f_s').value.split('\n').map(s=>s.trim()).filter(Boolean).map(x=>({x,done:(old.find(o=>o.x==x)||{}).done||null}))}
 if(gi>=0)S.goals[gi]=ng;else S.goals.push(ng);return true},
@@ -677,6 +821,11 @@ case 'dpay':if(!confirm('Удалить выплату '+fmt(S.debt.paid[D.i].s)
 case 'ash':openSheet('На полку идей','<label class="lb">Что отложить на потом</label><input class="in" id="f_v">',()=>{const t=$('f_v').value.trim();if(!t)return;S.shelf.push(t);return true},null);return;
 case 'dsh':if(!confirm('Убрать «'+S.shelf[D.i]+'» с полки?'))return;S.shelf.splice(+D.i,1);break;
 case 'theme':S.theme=D.v;applyTheme();break;
+// облако
+case 'sgo':tab='more';render();$('syncSec').scrollIntoView({block:'center'});return;
+case 'sin':if(!navigator.onLine){toast('Нет сети');return}Cloud.signIn().catch(()=>toast('Не удалось начать вход'));return;
+case 'snow':sync();return;
+case 'sout':if(!confirm('Выйти из аккаунта? Данные на этом устройстве останутся.'))return;Cloud.signOut().then(()=>{syncSt='';render()});return;
 case 'newm':if(!confirm('Начать новый месяц? Отметки сохранятся, цели месяца начнут считаться с сегодня, шаги сбросятся.'))return;
 S.start=today();S.goals.forEach(g=>{if(g.type=='steps')g.steps.forEach(s=>{s.done=null})});break;
 case 'rep':copyIO(report());return;
@@ -696,5 +845,11 @@ window.addEventListener('focus',refresh);
 setInterval(refresh,60000);
 
 load();applyTheme();render();
+// облако: вернулись со входа — показываем, потом синхронизируем; дальше после каждой правки, при появлении сети и при открытии
+Cloud.ready.then(back=>{if(back)render();sync()},e=>setSync('err','Вход не удался: '+e.message));
+window.addEventListener('online',()=>syncSoon(0));
+window.addEventListener('offline',()=>{if(Cloud.user())setSync('net')});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncSoon(0)});
+setInterval(()=>{if(!document.hidden)sync()},3e5);
 if('serviceWorker' in navigator&&location.protocol=='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
