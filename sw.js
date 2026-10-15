@@ -1,5 +1,5 @@
 // Офлайн-режим: сначала сеть (чтобы обновления приходили), без сети — сохранённая копия.
-const C = 'kurs-v5';
+const C = 'kurs-v9';
 const FILES = ['./', './index.html', './cloud.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
