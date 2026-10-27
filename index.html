@@ -63,6 +63,15 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .tcal em.p{box-shadow:inset 0 0 0 1.5px var(--ac)}
 .tcal button.td{box-shadow:inset 0 0 0 2px var(--ac)}
 .wcard{display:block;width:100%;text-align:left}
+.card>.st:first-child{border-top:0;padding-top:0}
+.why p{margin:4px 0 0;font-size:16px;font-style:italic;line-height:1.45}
+.ht small.dm{color:var(--ac);font-weight:700;margin-top:2px}
+.big2{font-size:26px;font-weight:800;color:var(--ok)}
+.st small.due{color:var(--mu)}
+.st small.late{color:var(--wr);font-weight:700}
+.st.nx small.due{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:var(--mu)}
+.st.nx small.due.late{color:var(--wr)}
+.hero[data-a]{cursor:pointer}
 .pchips{display:flex;gap:8px;overflow-x:auto;margin:0 0 12px;padding:2px 0;scrollbar-width:none}
 .pchips::-webkit-scrollbar{display:none}
 .pchips button{flex:none;border:0;border-radius:99px;padding:9px 15px;font-weight:800;font-size:14px;background:var(--soft);color:var(--mu)}
@@ -108,6 +117,14 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .lv button:active{transform:scale(.95)}
 .lv button.on{background:var(--c);color:#fff;box-shadow:0 6px 16px var(--cs)}
 .wk{display:flex;gap:5px;margin-top:12px}
+.hrow[data-a],.wk[data-a]{cursor:pointer}
+.hst{display:flex;gap:8px;margin:4px 0 14px}
+.hst div{flex:1;background:var(--soft);border-radius:14px;padding:10px 6px;text-align:center}
+.hst b{display:block;font-size:22px}
+.hst small{color:var(--mu);font-size:12px}
+.hcal button{color:var(--tx)}
+.hcal button.td{box-shadow:inset 0 0 0 2px var(--tx)}
+.hcal button.sel{outline:2px solid var(--ac);outline-offset:1px}
 .wk i{flex:1;height:24px;border-radius:8px;background:var(--soft);font-style:normal;font-size:10px;font-weight:800;color:var(--mu);display:flex;align-items:center;justify-content:center}
 .wk i.on{background:var(--c);color:#fff}
 .wk i.td{box-shadow:inset 0 0 0 2px var(--c)}
@@ -229,6 +246,12 @@ const TAGS=['Сон','Работа','Учёба','Зал','Люди','Одино
 const TRIG=['Скучно','Устал','Плохое настроение','Не получилось с учёбой','Одиноко','Просто привычка'];
 const DEF_ALTS=['10 отжиманий','Выйти на улицу на 5 минут','15 минут английского','Холодный душ'];
 const STOP_MIN=10;
+// направления целей: [ключ, значок, название, цель по умолчанию]. Прогресс считается сам из привычек, тренировок и долгов
+const DIRS=[['net','🌐','Сети','Профессия: понимать сеть провайдера от L2 до MPLS и BGP'],
+['en','🇬🇧','Английский','Выйти из базы A1: около 200 слов, 8–10 предложений о себе без переводчика, проверка от 80% две недели подряд'],
+['body','🏋️','Тело','Тренироваться регулярно'],
+['ppl','🤝','Люди','Тренировать других, быть нужным в зале'],
+['money','💸','Деньги','Закрыть долги. Сумму и темп решаю сам']];
 // [код, название, пояснение, коэффициент активности]
 const ACT=[['low','Низкая','сидячая работа, зал 1–2 раза в неделю',1.375],['mid','Средняя','сидячая работа, зал 3 раза или физическая подработка',1.55],['high','Высокая','зал 3+ раза и тяжёлая подработка',1.725]];
 // [название, ккал, белки, жиры, углеводы на 100 г, порция, грамм в порции] — примерные значения по таблицам
@@ -306,14 +329,7 @@ const fkey=()=>day=='y'?ago(1):today();
 const st=a=>a.map(x=>({x,done:null}));
 function init(){return migrate({v:2,start:today(),logs:{},debt:{total:0,paid:[]},habits:JSON.parse(JSON.stringify(DEF_H)),theme:'auto',bk:null,
 shelf:['Испанский','Электроника и микроконтроллеры'],
-goals:[
-{t:'Английский: дней занятий за месяц',type:'count',h:'en',target:24},
-{t:'Сети: дней занятий за месяц',type:'count',h:'net',target:24},
-{t:'Зал: посещений за месяц',type:'count',h:'gym',target:12},
-{t:'Шаг к людям: раз за месяц',type:'count',h:'ppl',target:4},
-{t:'Рассказ о себе по-английски (A1 → A2)',type:'steps',steps:st(['Выучить 100 базовых слов о себе: имя, работа, семья, еда, хобби','Освоить I am, I have, I like, I work, I live','Написать 8–10 простых предложений о себе','Записать себя голосом на телефон','Прочитать вслух без бумажки 3 раза','Рассказать Claude и разобрать ошибки'])},
-{t:'Сети L3: отчёт, как идут данные (поправь шаги под свой уровень)',type:'steps',steps:st(['Повторить IPv4-адресацию и маски','Решить 20 задач на подсети','Разобрать таблицу маршрутизации','Статический и динамический маршрут: объяснить своими словами','Собрать мини-лабу и записать, что настроил','Рассказать Claude, как идут данные на L3'])}
-]})}
+goals:[]})}
 // v1 и v2 дополняются до v3, всё старое сохраняется
 function migrate(o){
 if(!Array.isArray(o.habits))o.habits=JSON.parse(JSON.stringify(DEF_H));
@@ -331,6 +347,12 @@ o.train.tpl.forEach(T=>{if(!T.p)T.p='me'});
 o.goals.forEach(g=>{if(g.type=='steps'&&!('h' in g)){const m=/англ/i.test(g.t)?'en':/сет/i.test(g.t)?'net':'';g.h=o.habits.some(x=>x.id==m)?m:''}});
 // у целей постоянный id для синхронизации; старым даём g0, g1…, чтобы на разных устройствах они совпали
 o.goals.forEach((g,i)=>{if(!g.id){let j=i;while(o.goals.some(x=>x.id=='g'+j))j++;g.id='g'+j}});
+// вкладка «Цели» v4: «Зачем», направления и одна главная цель со ступеньками; прежние цели уходят в архив (не удаляются).
+// id главной цели постоянный, чтобы при миграции на двух устройствах не появилось две одинаковые
+if(!o.plan){o.plan={why:'Просыпаюсь рядом с любимым человеком, отвожу дочку в школу, обеспечиваю семью работой головой. Умный и сильный.',dirs:Object.fromEntries(DIRS.map(d=>[d[0],d[3]]))};
+o.goals.forEach(g=>{if(g.type!='main')g.arch=1});
+if(!o.goals.some(g=>g.id=='gm1'))o.goals.unshift({id:'gm1',type:'main',area:'net',t:'Сети: OSPF, IS-IS и MPLS',start:'2026-10-26',wit:'',done:null,
+steps:[{x:'Рассказать Claude главу 6: OSPF и IS-IS',due:'2026-11-02',done:null},{x:'Рассказать Claude про MPLS',due:'2026-11-09',done:null}]})}
 o.v=3;return o}
 function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}S=S&&S.v?migrate(S):init()}
 function store(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Не удалось сохранить')}}
@@ -348,7 +370,7 @@ try{M=JSON.parse(localStorage.getItem(SK))}catch(e){}
 const saveM=()=>{try{localStorage.setItem(SK,JSON.stringify(M))}catch(e){}};
 
 function rowsOf(o){
-const R={cfg:{start:o.start,shift:o.shift,moodNote:o.moodNote,shelf:o.shelf},debt:o.debt,
+const R={cfg:{start:o.start,shift:o.shift,moodNote:o.moodNote,shelf:o.shelf},debt:o.debt,plan:o.plan,
 food:{prof:o.food.prof,kcal:o.food.kcal,custom:o.food.custom,dishes:o.food.dishes,weight:o.food.weight}};
 o.habits.forEach((x,i)=>R['h:'+x.id]=Object.assign({o:i},x));
 o.goals.forEach((g,i)=>R['g:'+g.id]=Object.assign({o:i},g));
@@ -365,7 +387,7 @@ return R}
 // обратно из строк в S; то, что живёт только на устройстве, берём из loc
 function fromRows(R,loc){const c=R.cfg||{},f=R.food||{};
 const o={v:3,start:c.start||today(),shift:c.shift||null,moodNote:c.moodNote||null,shelf:c.shelf||[],debt:R.debt||{total:0,paid:[]},
-theme:loc.theme,bk:loc.bk,stop:loc.stop,logs:{},mood:{},
+theme:loc.theme,bk:loc.bk,stop:loc.stop,plan:R.plan,logs:{},mood:{},
 food:{prof:f.prof||null,kcal:f.kcal||0,custom:f.custom||[],dishes:f.dishes||[],weight:f.weight||[],log:{}}};
 const list=p=>Object.keys(R).filter(k=>k.startsWith(p)).map(k=>R[k]).sort((a,b)=>a.o-b.o||(a.id<b.id?-1:1)).map(x=>{const y=Object.assign({},x);delete y.o;return y});
 o.habits=list('h:');o.goals=list('g:');
@@ -481,7 +503,12 @@ const reportD=()=>add(S.start,30);
 const dayN=()=>diff(S.start,today())+1;
 function cnt(g){const e=endD();let n=0;for(const d in S.logs)if(d>=S.start&&d<=e&&S.logs[d][g.h])n++;return n}
 function pct(g){if(g.type=='count')return Math.min(100,Math.round(cnt(g)/(g.target||1)*100));const n=g.steps.length;return n?Math.round(g.steps.filter(s=>s.done).length/n*100):0}
-function total(){const a=S.goals.map(pct);return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0}
+const mainG=()=>S.goals.find(g=>g.type=='main'&&!g.done&&!g.arch);
+const gPct=g=>g.steps.length?Math.round(g.steps.filter(s=>s.done).length/g.steps.length*100):0;
+const curStep=g=>g.steps.findIndex(s=>!s.done);
+const areaHab=a=>a=='body'?(gymHab()||{}).id:a; // у «Сетей» и «Английского» id привычек совпадают с ключом направления
+const dueTxt=d=>{const n=diff(today(),d);return n>0?'до '+fmtD(d)+', через '+n+' '+plural(n,'день','дня','дней'):n==0?'срок сегодня':'просрочено на '+(-n)+' '+plural(-n,'день','дня','дней')};
+function cntH(id,a,b){let n=0;for(const d in S.logs)if(d>=a&&d<=b&&S.logs[d][id])n++;return n}
 function weekDone(id,key){const d=pd(key);d.setDate(d.getDate()-(d.getDay()+6)%7);const m=dk(d);for(let i=0;i<7;i++)if(logged(add(m,i),id))return true;return false}
 // 2/2: S.shift — любой день, который был первым днём смены
 const cyc=key=>((diff(S.shift,key)%4)+4)%4;
@@ -521,10 +548,27 @@ const L=S.logs[key]||{},c=(L[x.id]||{}).lvl||0,wd=x.w&&weekDone(x.id,key),on=c||
 let sub=c?'Отмечено в '+L[x.id].t:x.w?(wd?'На этой неделе уже сделано':'Раз в неделю'):'Каждый день';
 if(!c&&x.a&&isShift(key)===false)sub='Выходной: хватит минимума, '+esc(x.L[0]);
 let w='';for(let i=6;i>=0;i--){const d=add(key,-i);w+=`<i class="${logged(d,x.id)?'on':''} ${i?'':'td'}">${WD[pd(d).getDay()]}</i>`}
-let nx='';S.goals.forEach((g,gi)=>{if(g.type!='steps'||g.h!=x.id)return;const si=g.steps.findIndex(s=>!s.done);
-if(si>=0)nx+=`<button class="st nx" data-a="stp" data-g="${gi}" data-s="${si}"><b></b><span><small>Следующий шаг</small>${esc(g.steps[si].x)}</span></button>`});
-return `<div class="hab ${on?'done':''}" style="${hs(x)}"><div class="hrow"><div class="ico">${esc(x.ic)}</div><div class="ht"><b>${esc(x.n)}${x.a?'<span class="tag">якорь</span>':''}</b><small>${sub}</small></div><div class="ok">${on?'✓':''}</div></div>`+
-`<div class="lv">${x.L.map((l,i)=>`<button class="${c==i+1?'on':''}" data-a="lv" data-h="${esc(x.id)}" data-i="${i+1}">${esc(l)}</button>`).join('')}</div>${nx}<div class="wk">${w}</div></div>`}
+let nx='';S.goals.forEach((g,gi)=>{if(g.arch||g.done)return;const hid=g.type=='main'?areaHab(g.area):g.type=='steps'?g.h:null;if(!hid||hid!=x.id)return;
+const si=g.steps.findIndex(s=>!s.done);if(si<0)return;const s=g.steps[si];
+nx+=`<button class="st nx" data-a="stp" data-g="${gi}" data-s="${si}"><b></b><span><small>${g.type=='main'?'Главная цель · ступенька '+(si+1)+' из '+g.steps.length:'Следующий шаг'}</small>${esc(s.x)}${s.due?`<small class="due ${s.due<today()?'late':''}">${dueTxt(s.due)}</small>`:''}</span></button>`});
+return `<div class="hab ${on?'done':''}" style="${hs(x)}"><div class="hrow" data-a="hcal" data-h="${esc(x.id)}"><div class="ico">${esc(x.ic)}</div><div class="ht"><b>${esc(x.n)}${x.a?'<span class="tag">якорь</span>':''}</b><small>${sub}</small></div><div class="ok">${on?'✓':''}</div></div>`+
+`<div class="lv">${x.L.map((l,i)=>`<button class="${c==i+1?'on':''}" data-a="lv" data-h="${esc(x.id)}" data-i="${i+1}">${esc(l)}</button>`).join('')}</div>${nx}<div class="wk" data-a="hcal" data-h="${esc(x.id)}">${w}</div></div>`}
+
+// календарь привычки: месяц целиком, листается назад; яркость дня — уровень (15 мин бледнее, чем 2 часа)
+let HC=null;
+function habStreak(x){const t=today();let s=0;
+if(x.w){let m=weekStart(t);if(!weekDone(x.id,m))m=add(m,-7);while(weekDone(x.id,m)){s++;m=add(m,-7)}return s}
+let d=logged(t,x.id)?t:ago(1);while(logged(d,x.id)){s++;d=add(d,-1)}return s}
+function habCal(){const x=hab(HC.id);if(!x)return '';const t=today(),cm=t.slice(0,7),[y,mo]=HC.m.split('-').map(Number),f=new Date(y,mo-1,1),off=(f.getDay()+6)%7,n=new Date(y,mo,0).getDate();
+let cnt=0,all=0;for(const d in S.logs)if(S.logs[d][x.id]){all++;if(d.startsWith(HC.m))cnt++}
+const upto=HC.m==cm?+t.slice(8):n;
+let h=`<div class="hst"><div><b>${cnt}</b><small>${x.w?'раз за месяц':'из '+upto+' дн.'}</small></div><div><b>${all}</b><small>всего</small></div><div><b>${habStreak(x)}</b><small>${x.w?'недель подряд':'дней подряд'}</small></div></div>`+
+`<div class="exh" style="margin-bottom:8px"><button class="ib" data-a="hcm" data-d="-1" aria-label="Раньше">‹</button><b style="flex:1;text-align:center">${cap(f.toLocaleDateString('ru-RU',{month:'long',year:'numeric'}))}</b><button class="ib" data-a="hcm" data-d="1" ${HC.m>=cm?'disabled':''} aria-label="Позже">›</button></div>`+
+'<div class="cal hcal">'+['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<i>${d}</i>`).join('')+'<i></i>'.repeat(off);
+for(let i=1;i<=n;i++){const k=HC.m+'-'+p(i),L=(S.logs[k]||{})[x.id],a=L?Math.round(255*(x.L.length>1?.45+.55*Math.min(L.lvl||1,x.L.length)/x.L.length:1)).toString(16).padStart(2,'0'):'';
+h+=`<button type="button" data-a="hcd" data-d="${k}" class="${k==t?'td':''}" ${k>t?'disabled':''} style="${L?'background:'+x.c+a+';color:#fff':''}">${i}</button>`}
+return h+'</div><div id="f_hd" class="mu" style="margin-top:12px">Нажми на день, чтобы увидеть отметку.</div>'}
+function habCalSheet(id){HC={id,m:fkey().slice(0,7)};const x=hab(id);openSheet(x.ic+' '+x.n,`<div id="f_hc">${habCal()}</div>`,null,null)}
 
 function moodCard(key){
 const M=S.mood[key]||{},sh=isShift(key);
@@ -545,8 +589,10 @@ function vToday(){
 const t=today(),key=fkey(),n=dayN(),anc=S.habits.filter(h=>h.a),T=S.logs[t]||{},Y=S.logs[ago(1)]||{};
 const dl=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 let h=head(dl,'Сегодня');
-h+=`<div class="hero">${ring(total(),86,9,'#fff','rgba(255,255,255,.25)',20)}<div class="info"><b>${n>30?'Месяц завершён':'День '+n+' из 30'}</b><p>Прогресс целей месяца. Отчёт Claude: ${fmtD(reportD())}</p>`+
-(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+'</div></div>';
+const G=mainG(),gs=G?G.steps[curStep(G)]:null;
+h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
+`<p>${G?(gs?'Сейчас: '+esc(gs.x)+(gs.due?' · '+dueTxt(gs.due):''):''):'Выбери её во вкладке «Цели»'}</p>`+
+(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
 if(n>30)h+=`<button class="note in" data-a="tab" data-t="more">🏁 30 дней прошли. Составь отчёт для Claude и начни новый месяц во вкладке «Ещё».</button>`;
 if(n>1&&anc.length&&!anc.some(a=>Y[a.id]||T[a.id]))h+=`<div class="note wr">⚠️ Вчера был пропуск. Сегодня хватит минимума: ${anc.map(a=>esc(a.n)+' '+esc(a.L[0])).join(', ')}. Два пропуска подряд нельзя.</div>`;
 if(heavy()&&(!S.moodNote||diff(S.moodNote,t)>=7))h+=`<div class="note in">Последние две недели много тяжёлых дней. Это не слабость и не лень. Если так держится, можно поговорить с психологом или врачом, это нормальный шаг.<button class="btn g" data-a="mnote" style="margin:10px 0 0">Понял</button></div>`;
@@ -683,7 +729,7 @@ return h+'<div class="row2"><button class="btn g" data-a="ttplsave">Сохран
 
 function tLib(){let h=back('cal','Календарь')+head('Библиотека','Упражнения');
 const X=S.train.ex.slice().sort((a,b)=>a.n.localeCompare(b.n,'ru'));
-if(X.length)h+='<div class="card">'+X.map(x=>{const L=lastOf(x.id,null);return `<button class="li plain" style="width:100%" data-a="texv" data-e="${x.id}"><div class="ht"><b>${esc(x.n)}</b><small>${KN[x.k]}${L?' · '+fmtD(L.w.d)+': '+L.it.sets.filter(s=>s.ok).slice(0,3).map(s=>setTxt(x.k,s)).join(' · '):''}</small></div><span class="mu">›</span></button>`}).join('')+'</div>';
+if(X.length)h+='<div class="card">'+X.map(x=>{const L=lastOf(x.id,null);return `<div class="li"><button class="ht plain" data-a="texv" data-e="${x.id}"><b>${esc(x.n)}</b><small>${KN[x.k]}${L?' · '+fmtD(L.w.d)+': '+L.it.sets.filter(s=>s.ok).slice(0,3).map(s=>setTxt(x.k,s)).join(' · '):''}</small></button><button class="ib" data-a="texed" data-e="${x.id}" aria-label="Изменить или удалить">✎</button></div>`}).join('')+'</div>';
 else h+='<div class="card mu">Упражнений пока нет. Они появятся здесь, когда добавишь их в тренировку.</div>';
 return h+'<button class="btn g" data-a="texnew">＋ Новое упражнение</button>'}
 
@@ -716,15 +762,56 @@ if(left<=0){RT=null;clearInterval(rtI);beep();if(navigator.vibrate)navigator.vib
 el.className='on';el.innerHTML=`<span>Отдых</span><b>${fmtT(left)}</b><button data-a="r15">+15 с</button><button data-a="rx" aria-label="Остановить">✕</button>`}
 
 // ---------- остальные экраны ----------
-function vGoals(){
-let h=head(fmtD(S.start)+' — '+fmtD(endD()),'Цели месяца');
-S.goals.forEach((g,gi)=>{const v=pct(g),hb=hab(g.h),col=g.type=='count'&&hb?hb.c:'#6366f1';
-const sub=(g.type=='count'?cnt(g)+' из '+g.target:g.steps.filter(s=>s.done).length+' из '+g.steps.length+' шагов')+(hb?' · '+esc(hb.ic)+' '+esc(hb.n):'');
-h+=`<div class="card"><div class="gh">${ring(v,54,6,col,'var(--soft)',13)}<div class="t">${esc(g.t)}<div class="mu">${sub}</div></div><button class="ib" data-a="egoal" data-g="${gi}" aria-label="Изменить">✎</button></div>`;
-if(g.type=='steps')g.steps.forEach((s,si)=>{h+=`<button class="st ${s.done?'d':''}" data-a="stp" data-g="${gi}" data-s="${si}"><b>${s.done?'✓':''}</b><span>${esc(s.x)}${s.done?'<small>'+s.done+'</small>':''}</span></button>`});
-h+='</div>'});
-if(!S.goals.length)h+='<div class="card mu">Целей пока нет.</div>';
-return h+'<button class="btn" data-a="egoal" data-g="-1">＋ Новая цель</button>'}
+let pigAll=false;
+function dirMetric(k){const a=ago(29),t=today();
+if(k=='net'||k=='en'){const x=hab(k);if(!x)return 'Привычки «'+(k=='net'?'Сети':'Английский')+'» нет';return `${cntH(k,a,t)} дн. из последних 30 · серия ${habStreak(x)}`}
+if(k=='body'){const W=wp('me').filter(w=>w.done),n=W.filter(w=>w.d>=a).length,wk=W.filter(w=>w.d>=weekStart(t)).length;
+return `${n} ${plural(n,'тренировка','тренировки','тренировок')} за 30 дней · неделя: ${wk} из ${profOf('me').wk||3}`}
+if(k=='ppl'){const O=profs().filter(q=>q.id!='me');if(!O.length)return 'Добавь профили во вкладке «Тренировки»';
+const P=O.map(q=>[q.n,wp(q.id).filter(w=>w.done&&w.d>=a).length]),n=P.reduce((x,y)=>x+y[1],0);
+return `${n} ${plural(n,'тренировка','тренировки','тренировок')} за 30 дней: `+P.map(x=>esc(x[0])+' '+x[1]).join(', ')}
+const d=S.debt,pd=d.paid.reduce((x,y)=>x+y.s,0);return d.total?'Выплачено '+Math.min(100,Math.round(pd/d.total*100))+'%':'Сумма долгов не указана'}
+// копилка: всё сделанное само собирается из данных — ступеньки, тренировки, рекорды, выплаты, «что получилось»
+function piggy(days){const a=days?ago(days-1):'0000',L=[];
+S.goals.forEach(g=>{if(g.type!='main')return;g.steps.forEach(s=>{if(s.done&&s.done.slice(0,10)>=a)L.push([s.done.slice(0,10),'🎯','Ступенька: '+s.x])});
+if(g.done&&g.done>=a)L.push([g.done,'🏆','Цель выполнена: '+g.t])});
+wl().forEach(w=>{if(!w.done||w.d<a)return;const me=(w.p||'me')=='me';L.push([w.d,me?'🏋️':'🤝',me?'Тренировка: '+w.n:'Тренировал: '+profOf(w.p).n+', '+w.n]);
+if(me)w.items.forEach((it,ii)=>{const k=exKind(it);let best=null;it.sets.forEach((s,si)=>{if(s.ok&&isRec(w,ii,si)&&(!best||score(k,s)>score(k,best)))best=s});
+if(best)L.push([w.d,'🥇','Рекорд: '+exName(it)+' '+setTxt(k,best)])})});
+S.debt.paid.forEach(x=>{const d=x.d.slice(0,10);if(d>=a)L.push([d,'💸','Выплата долга: '+fmt(x.s)])});
+for(const d in S.mood)if(d>=a&&S.mood[d].win)L.push([d,'✓',S.mood[d].win]);
+return L.sort((x,y)=>x[0]<y[0]?1:x[0]>y[0]?-1:0)}
+// сравнение только с собой: прошлые 30 дней → последние 30
+function cmpRows(){const t=today(),a=ago(29),b0=ago(59),b1=ago(30);
+const me=(x,y)=>wp('me').filter(w=>w.done&&w.d>=x&&w.d<=y).length,oth=(x,y)=>wl().filter(w=>w.done&&(w.p||'me')!='me'&&w.d>=x&&w.d<=y).length;
+const pay=(x,y)=>S.debt.paid.filter(q=>q.d.slice(0,10)>=x&&q.d.slice(0,10)<=y).reduce((s,q)=>s+q.s,0);
+const win=(x,y)=>Object.keys(S.mood).filter(d=>d>=x&&d<=y&&S.mood[d].win).length;
+const R=[];if(hab('en'))R.push(['🇬🇧 Дней английского',cntH('en',b0,b1),cntH('en',a,t)]);if(hab('net'))R.push(['🌐 Дней сетей',cntH('net',b0,b1),cntH('net',a,t)]);
+R.push(['🏋️ Тренировок',me(b0,b1),me(a,t)],['🤝 Тренировок с другими',oth(b0,b1),oth(a,t)],['💸 Выплачено',pay(b0,b1),pay(a,t)],['✓ «Получилось»',win(b0,b1),win(a,t)]);
+return R.filter(r=>r[1]||r[2])}
+
+function vGoals(){const t=today(),G=mainG();
+let h=head('Зачем, куда и что уже сделано','Цели');
+h+=`<button class="card wcard why" data-a="gwhy"><small class="mu">ЗАЧЕМ</small><p>${esc(S.plan.why||'Напиши, какой жизни хочешь, своими словами.')}</p></button>`;
+h+='<h2>Главная цель</h2>';
+if(G){const gi=S.goals.indexOf(G),fin=G.steps.filter(s=>s.due).map(s=>s.due).sort().pop();
+h+=`<div class="hero g4">${ring(gPct(G),78,8,'#fff','rgba(255,255,255,.25)',18)}<div class="info"><b>${esc(G.t)}</b><p>${fin?'Финиш: '+fmtD(fin):''}${G.wit?' · знает: '+esc(G.wit):''}</p></div></div>`;
+h+='<div class="card">'+G.steps.map((s,i)=>{const late=!s.done&&s.due&&s.due<t;
+return `<button class="st ${s.done?'d':''}" data-a="stp" data-g="${gi}" data-s="${i}"><b>${s.done?'✓':''}</b><span>${esc(s.x)}<small class="${s.done?'':'due'+(late?' late':'')}">${s.done?'сделано '+fmtD(s.done.slice(0,10)):s.due?dueTxt(s.due):''}</small></span></button>`+
+(late?`<button class="btn g" data-a="gshift" data-g="${gi}" data-s="${i}" style="margin:0 0 8px">Сдвинуть и уменьшить</button>`:'')}).join('')+'</div>';
+h+=`<div class="row2"><button class="btn" data-a="gshare">📣 Отправить</button><button class="btn g" data-a="gedit" data-g="${gi}">✎ Изменить</button></div>`;
+if(!G.wit)h+='<div class="mu" style="padding:0 4px 4px">Свидетель — живой человек, который знает о цели. С ним держаться легче: укажи его в «Изменить» и отправь план.</div>'}
+else{const D=S.goals.filter(g=>g.type=='main'&&g.done&&!g.arch).sort((x,y)=>x.done<y.done?-1:1).pop();
+h+=`<div class="card">${D?`<b>🏆 Выполнено: ${esc(D.t)}</b><div class="mu" style="margin-top:4px">${fmtD(D.done)}. Пора выбрать следующую.</div>`:'<div class="mu">Одна цель, которую можно проверить: срок и 2–5 ступенек, каждая не дольше недели.</div>'}</div><button class="btn" data-a="gedit" data-g="-1">＋ Главная цель</button>`}
+h+='<h2>Направления</h2><div class="card">'+DIRS.map(d=>`<button class="li plain" style="width:100%" data-a="gdir" data-k="${d[0]}"><div class="ico" style="--ct:var(--soft)">${d[1]}</div><div class="ht"><b>${d[2]}${G&&G.area==d[0]?'<span class="tag">главная</span>':''}</b><small>${esc((S.plan.dirs||{})[d[0]]||'')}</small><small class="dm">${dirMetric(d[0])}</small></div></button>`).join('')+'</div>';
+const C=cmpRows();
+if(C.length)h+='<h2>Месяц назад → сейчас</h2><div class="card"><div class="mu" style="margin-bottom:4px">Прошлые 30 дней → последние 30. Сравнение только с собой.</div>'+C.map(r=>`<div class="link"><span>${r[0]}</span><b>${fmt(r[1])} → <span style="color:${r[2]>r[1]?'var(--ok)':'inherit'}">${fmt(r[2])}</span></b></div>`).join('')+'</div>';
+const P=piggy(30);
+h+=`<h2>Копилка</h2><div class="card"><div class="exh"><b style="flex:1">Засчитано за 30 дней</b><span class="big2">${P.length}</span></div>`+
+(P.length?(pigAll?P:P.slice(0,10)).map(x=>`<div class="link"><span>${x[1]} ${esc(x[2])}</span><small class="mu" style="flex:none">${fmtD(x[0])}</small></div>`).join('')+(P.length>10?`<button class="btn g" data-a="gall" style="margin:10px 0 0">${pigAll?'Свернуть':'Показать всё ('+P.length+')'}</button>`:'')
+:'<div class="mu" style="margin-top:6px">Сюда сами падают пройденные ступеньки, тренировки, рекорды, выплаты и то, что получилось за день.</div>')+'</div>';
+const A=S.goals.filter(g=>g.arch);if(A.length)h+=`<button class="btn g" data-a="garch">Старые цели (${A.length})</button>`;
+return h}
 
 function vDebt(){
 const d=S.debt,paid=d.paid.reduce((a,b)=>a+b.s,0),v=d.total?Math.min(100,Math.round(paid/d.total*100)):0;
@@ -812,21 +899,28 @@ if(i>=0)S.habits[i]=nh;else S.habits.push(nh);return true},
 i>=0?()=>{if(!confirm('Удалить привычку «'+x.n+'»? Цели со счётом по ней тоже удалятся. Старые отметки останутся в копии.'))return;
 S.habits.splice(i,1);S.goals=S.goals.filter(g=>!(g.type=='count'&&g.h==x.id));return true}:null)}
 
-function goalSheet(gi){
-const g=gi>=0?S.goals[gi]:{t:'',type:'count',h:(S.habits[0]||{}).id,target:20,steps:[]};
-const opts=sel=>S.habits.map(x=>`<option value="${esc(x.id)}" ${x.id==sel?'selected':''}>${esc(x.ic+' '+x.n)}</option>`).join('');
-openSheet(gi>=0?'Цель':'Новая цель',
-`<label class="lb">Название</label><input class="in" id="f_t" value="${esc(g.t)}">`+
-`<label class="lb">Как считать</label>${seg('type',[['count','Дни привычки'],['steps','Шаги']],g.type)}`+
-`<div data-when="type=count"><label class="lb">Привычка</label><select class="in" id="f_h">${opts(g.h)}</select><label class="lb">Сколько раз за месяц</label><input class="in" id="f_g" inputmode="numeric" value="${g.target||''}"></div>`+
-`<div data-when="type=steps"><label class="lb">Шаги, каждый с новой строки</label><textarea class="in" id="f_s" rows="7">${esc((g.steps||[]).map(s=>s.x).join('\n'))}</textarea><div class="hint">Отметки у шагов с тем же текстом сохранятся.</div>`+
-`<label class="lb">Показывать следующий шаг в карточке</label><select class="in" id="f_h2"><option value="">Нигде</option>${opts(g.type=='steps'?g.h:'')}</select></div>`,
-()=>{const t=$('f_t').value.trim();if(!t){alert('Напиши название');return}
-const ng={id:g.id||'g'+Date.now().toString(36),t,type:val('type')};
-if(ng.type=='count'){ng.h=$('f_h').value;ng.target=Math.max(1,parseInt($('f_g').value)||1);if(!ng.h){alert('Сначала добавь привычку');return}}
-else{const old=g.steps||[];ng.h=$('f_h2').value;ng.steps=$('f_s').value.split('\n').map(s=>s.trim()).filter(Boolean).map(x=>({x,done:(old.find(o=>o.x==x)||{}).done||null}))}
-if(gi>=0)S.goals[gi]=ng;else S.goals.push(ng);return true},
-gi>=0?()=>{if(!confirm('Удалить цель «'+g.t+'»?'))return;S.goals.splice(gi,1);return true}:null)}
+function mainSheet(gi){const g=gi>=0?S.goals[gi]:{id:'',type:'main',area:'net',t:'',wit:'',steps:[]},rows=[];
+for(let i=0;i<5;i++){const s=g.steps[i]||{x:'',due:''};rows.push(`<div class="row2" style="margin-bottom:8px"><input class="in" id="f_sx${i}" value="${esc(s.x)}" placeholder="Ступенька ${i+1}"><input class="in" type="date" id="f_sd${i}" value="${s.due||''}" style="flex:0 0 138px"></div>`)}
+openSheet(gi>=0?'Главная цель':'Новая главная цель',
+`<label class="lb">Что именно будет готово</label><input class="in" id="f_gt" value="${esc(g.t)}" placeholder="Например: Сети — OSPF, IS-IS и MPLS">`+
+`<label class="lb">Направление</label><div class="chips" id="f_ga">${DIRS.map(d=>`<button type="button" class="${d[0]==g.area?'on':''}" data-a="fsel" data-v="${d[0]}">${d[1]} ${d[2]}</button>`).join('')}</div>`+
+`<label class="lb">Ступеньки и сроки, каждая не дольше недели</label>${rows.join('')}`+
+`<label class="lb">Свидетель: кто знает об этой цели</label><input class="in" id="f_gw" value="${esc(g.wit||'')}" placeholder="Имя живого человека">`,
+()=>{const t=$('f_gt').value.trim();if(!t){alert('Напиши цель');return}const st=[];
+for(let i=0;i<5;i++){const x=$('f_sx'+i).value.trim();if(!x)continue;const old=(g.steps||[]).find(o=>o.x==x);st.push({x,due:$('f_sd'+i).value||'',done:old?old.done:null})}
+if(!st.length){alert('Нужна хотя бы одна ступенька');return}
+Object.assign(g,{t,area:(document.querySelector('#f_ga .on')||{dataset:{v:'net'}}).dataset.v,wit:$('f_gw').value.trim(),steps:st});g.done=st.every(s=>s.done)?today():null;
+if(gi<0){g.id='gm'+Date.now().toString(36);g.start=today();S.goals.unshift(g)}return true},
+gi>=0?()=>{if(!confirm('Удалить главную цель «'+g.t+'»? Её ступеньки пропадут из копилки.'))return;S.goals.splice(gi,1);return true}:null)}
+// не успел — уменьшаем ступеньку и переносим срок; следующие ступеньки сдвигаются на столько же
+function gShiftSheet(gi,si){const g=S.goals[gi],s=g.steps[si];
+openSheet('Сдвинуть и уменьшить',`<div class="mu">Не успел — это не провал. Сделай ступеньку меньше и дай новый срок.</div><label class="lb">Ступенька</label><textarea class="in" id="f_sx" rows="2">${esc(s.x)}</textarea><label class="lb">Новый срок</label><input class="in" type="date" id="f_sd" value="${add(today(),3)}">`,
+()=>{const x=$('f_sx').value.trim(),d=$('f_sd').value;if(!x||!/^\d{4}-\d\d-\d\d$/.test(d)){alert('Нужны текст и дата');return}
+const dl=s.due?diff(s.due,d):0;s.x=x;s.due=d;if(dl>0)g.steps.forEach((q,i)=>{if(i>si&&!q.done&&q.due)q.due=add(q.due,dl)});return true},null)}
+function txtSheet(title,label,v,hint,apply){openSheet(title,`<label class="lb">${label}</label><textarea class="in" id="f_tx" rows="4">${esc(v||'')}</textarea>${hint?'<div class="hint">'+hint+'</div>':''}`,()=>apply($('f_tx').value.trim()),null)}
+function archSheet(){const A=S.goals.filter(g=>g.arch);
+openSheet('Старые цели',A.length?'<div class="mu" style="margin-bottom:8px">Цели из прошлой версии вкладки. Привычки и отметки от их удаления не пострадают.</div>'+
+A.map(g=>`<div class="li"><div class="ht"><b>${esc(g.t)}</b><small>${g.type=='count'?cnt(g)+' из '+g.target+' за месяц':(g.steps||[]).filter(s=>s.done).length+' из '+(g.steps||[]).length+' шагов'}</small></div><button class="ib" data-a="gadel" data-id="${g.id}" aria-label="Удалить">✕</button></div>`).join(''):'<div class="mu">Пусто.</div>',null,null)}
 
 function numSheet(title,label,v,apply){
 openSheet(title,`<label class="lb">${label}</label><input class="in" id="f_v" inputmode="decimal" value="${v}" placeholder="0">`,
@@ -942,12 +1036,13 @@ it.sets.length>1?()=>{it.sets.splice(si,1);return true}:null,'Удалить п�
 function itemSheet(ii){const w=S.train.w[trW],it=w.items[ii];
 openSheet(exName(it),`<label class="lb">Отдых между подходами</label><div class="chips" id="f_rs">${[30,60,90,120,150,180,240,300].map(s=>`<button type="button" class="${it.rest==s?'on':''}" data-a="fsel">${fmtT(s)}</button>`).join('')}</div>`+
 `<label class="lb">Заметка к упражнению</label><textarea class="in" id="f_nt" rows="2" placeholder="Техника, ощущения, что поменять">${esc(it.note||'')}</textarea>`+
-`<div class="row2" style="margin-top:14px"><button type="button" class="btn g" data-a="timv" data-i="${ii}" data-d="-1" ${ii?'':'disabled'}>↑ Выше</button><button type="button" class="btn g" data-a="timv" data-i="${ii}" data-d="1" ${ii<w.items.length-1?'':'disabled'}>↓ Ниже</button></div>`,
+`<div class="row2" style="margin-top:14px"><button type="button" class="btn g" data-a="timv" data-i="${ii}" data-d="-1" ${ii?'':'disabled'}>↑ Выше</button><button type="button" class="btn g" data-a="timv" data-i="${ii}" data-d="1" ${ii<w.items.length-1?'':'disabled'}>↓ Ниже</button></div>`+
+(exOf(it.e)?`<button type="button" class="btn g" data-a="texed" data-e="${it.e}" style="margin:10px 0 0">✎ Переименовать или удалить упражнение</button>`:''),
 ()=>{const b=document.querySelector('#f_rs .on');if(b){const [m,s]=b.textContent.split(':');it.rest=+m*60+ +s}it.note=$('f_nt').value.trim();return true},
 ()=>{if(!confirm('Убрать «'+exName(it)+'» из этой тренировки?'))return;w.items.splice(ii,1);return true},'Убрать из тренировки')}
 function exList(q){q=q.trim().toLowerCase();const X=S.train.ex.filter(x=>!q||x.n.toLowerCase().includes(q)).sort((a,b)=>a.n.localeCompare(b.n,'ru'));
 if(!X.length)return `<div class="mu" style="padding:10px 2px">${S.train.ex.length?'Не нашлось.':'Библиотека пока пустая.'} Создай новое упражнение.</div>`;
-return X.map(x=>`<div class="li" data-a="texpick" data-e="${x.id}"><div class="ht"><b>${esc(x.n)}</b><small>${KN[x.k]}</small></div></div>`).join('')}
+return X.map(x=>`<div class="li" data-a="texpick" data-e="${x.id}"><div class="ht"><b>${esc(x.n)}</b><small>${KN[x.k]}</small></div><button class="ib" data-a="texed" data-e="${x.id}" aria-label="Изменить или удалить">✎</button></div>`).join('')}
 function exPickSheet(){openSheet('Добавить упражнение',`<input class="in" id="f_xq" placeholder="Поиск" autocomplete="off"><div class="res" id="f_xr">${exList('')}</div><button class="btn g" data-a="texnew" style="margin:12px 0 0">＋ Новое упражнение</button>`,null,null)}
 function exSheet(id){const x=id?exOf(id):{n:'',k:'wr'},inW=!id&&trV=='w'&&S.train.w[trW];
 openSheet(id?'Упражнение':'Новое упражнение',`<label class="lb">Название</label><input class="in" id="f_xn" value="${esc(x.n)}" placeholder="Например: Присед со штангой">`+
@@ -956,7 +1051,11 @@ openSheet(id?'Упражнение':'Новое упражнение',`<label cl
 ()=>{const n=$('f_xn').value.trim(),k=(document.querySelector('#f_xk .on')||{dataset:{v:'wr'}}).dataset.v;if(!n){alert('Напиши название');return}
 if(S.train.ex.some(e=>e.id!=id&&e.n.toLowerCase()==n.toLowerCase())){alert('Такое упражнение уже есть, выбери его из списка');return}
 if(id){x.n=n;x.k=k}else{const e={id:uid('e'),n,k};S.train.ex.push(e);if(inW)S.train.w[trW].items.push(itemFor(e.id,0,0,S.train.w[trW].p))}return true},
-id?()=>{if(!confirm('Удалить «'+x.n+'» из библиотеки? В старых тренировках записи останутся.'))return;S.train.ex=S.train.ex.filter(e=>e.id!=id);trV='lib';return true}:null)}
+id?()=>{if(!confirm('Удалить «'+x.n+'»? Оно исчезнет из библиотеки и из незавершённых тренировок. В завершённых тренировках записи останутся.'))return;
+S.train.ex=S.train.ex.filter(e=>e.id!=id);
+for(const k in S.train.w){const w=S.train.w[k];if(!w.done)w.items=w.items.filter(i=>i.e!=id)}
+S.train.tpl.forEach(T=>{T.items=T.items.filter(i=>i.e!=id)});
+if(trV=='ex')trV='lib';toast('Упражнение удалено');return true}:null,'Удалить упражнение')}
 function tplSaveSheet(){const w=S.train.w[trW];if(!w.items.length){toast('Сначала добавь упражнения');return}
 openSheet('Сохранить как шаблон',`<label class="lb">Название шаблона</label><input class="in" id="f_pn" value="${esc(w.n)}"><div class="hint">Сохранятся упражнения, число подходов и отдых. Веса каждый раз подставляются с прошлого раза.</div>`,
 ()=>{const n=$('f_pn').value.trim();if(!n){alert('Напиши название');return}
@@ -1034,10 +1133,12 @@ openSheet('Красная кнопка',`<label class="lb">Зачем я мен�
 // ---------- отчёт и прочее ----------
 function report(){
 const d=S.debt,pdx=d.paid.reduce((a,b)=>a+b.s,0);
-let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30. Общий прогресс: ${total()}%\n`;
+let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`;
 if(S.shift)r+=`График 2/2: сегодня ${isShift(today())?'смена':'выходной'}\n`;
-r+='Цели:\n';
-S.goals.forEach(g=>{r+=`- ${g.t}: ${pct(g)}%`+(g.type=='count'?` (${cnt(g)} из ${g.target})`:'')+'\n'});
+const G=mainG();
+r+=G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
+r+='Направления:\n'+DIRS.map(d=>`- ${d[2]}: ${dirMetric(d[0]).replace(/<[^>]+>/g,'')}`).join('\n')+'\n';
+r+=`Копилка за 30 дней: ${piggy(30).length}\n`;
 r+='Привычки за последние 7 дней:\n';
 S.habits.forEach(x=>{let k=0;for(let i=0;i<7;i++)if(logged(ago(i),x.id))k++;r+=`- ${x.n}: ${k} из 7\n`});
 const ms=[];for(let i=6;i>=0;i--){const k=ago(i);if(S.mood[k])ms.push([k,S.mood[k]])}
@@ -1084,9 +1185,24 @@ case 'ssave':if(!(sheetSave&&sheetSave()))return;closeSheet();break;
 case 'sdel':if(!(sheetDel&&sheetDel()))return;closeSheet();break;
 case 'lv':{const d=fkey();S.logs[d]=S.logs[d]||{};const c=S.logs[d][D.h];
 if(c&&c.lvl==D.i)delete S.logs[d][D.h];else S.logs[d][D.h]={lvl:+D.i,t:day=='y'?'(за вчера) '+tm(new Date()):tm(new Date())};break}
-case 'stp':{const s=S.goals[D.g].steps[D.s];s.done=s.done?null:nowS();if(s.done)toast('Шаг засчитан ✓');break}
-case 'egoal':goalSheet(+D.g);return;
+case 'stp':{const g=S.goals[D.g],s=g.steps[D.s];s.done=s.done?null:nowS();
+if(g.type=='main'){const all=g.steps.every(x=>x.done);g.done=all?today():null;if(all){toast('🏆 Цель выполнена!');break}}
+if(s.done)toast('Ступенька засчитана ✓');break}
+case 'gedit':mainSheet(+D.g);return;
+case 'gshift':gShiftSheet(+D.g,+D.s);return;
+case 'gwhy':txtSheet('Зачем','Какой жизни я хочу',S.plan.why,'Твоими словами. Это видно наверху вкладки «Цели».',v=>{S.plan.why=v;return true});return;
+case 'gdir':{const d=DIRS.find(x=>x[0]==D.k);txtSheet(d[1]+' '+d[2],'Цель направления',(S.plan.dirs||{})[D.k],'Цифры под целью считаются сами из привычек, тренировок и долгов.',v=>{S.plan.dirs=S.plan.dirs||{};S.plan.dirs[D.k]=v;return true});return}
+case 'gshare':{const G=mainG();if(!G)return;const s=G.steps[curStep(G)];
+const txt=`Моя главная цель: ${G.t}.`+(s?`\nСейчас: ${s.x}${s.due?' — до '+fmtD(s.due):''}.`:'')+(s&&s.due?`\n${G.wit?G.wit+', с':'С'}проси меня ${fmtD(s.due)}, как прошло.`:'');
+if(navigator.share)navigator.share({text:txt}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('Текст скопирован, отправь его'),()=>toast('Не удалось скопировать'));return}
+case 'gall':pigAll=!pigAll;render();return;
+case 'garch':archSheet();return;
+case 'gadel':{const g=S.goals.find(x=>x.id==D.id);if(!g||!confirm('Удалить «'+g.t+'»?'))return;S.goals=S.goals.filter(x=>x!==g);save();render();archSheet();return}
 case 'ehab':habitSheet(+D.i);return;
+case 'hcal':habCalSheet(D.h);return;
+case 'hcm':{const [y,m]=HC.m.split('-').map(Number);HC.m=dk(new Date(y,m-1+ +D.d,1)).slice(0,7);$('f_hc').innerHTML=habCal();return}
+case 'hcd':{const x=hab(HC.id),L=(S.logs[D.d]||{})[HC.id];b.parentNode.querySelectorAll('button').forEach(q=>q.classList.toggle('sel',q==b));
+$('f_hd').innerHTML=`<b style="color:var(--tx)">${fmtD(D.d)}</b>: `+(L?esc(x.L[(L.lvl||1)-1]||'отмечено')+(L.t?', '+esc(L.t):''):'не отмечено');return}
 case 'hmv':{const i=+D.i,j=i+ +D.d,H=S.habits;[H[i],H[j]]=[H[j],H[i]];break}
 case 'shift':shiftSheet();return;
 // настроение
@@ -1164,8 +1280,8 @@ case 'sgo':tab='more';render();$('syncSec').scrollIntoView({block:'center'});ret
 case 'sin':if(!navigator.onLine){toast('Нет сети');return}Cloud.signIn().catch(()=>toast('Не удалось начать вход'));return;
 case 'snow':sync();return;
 case 'sout':if(!confirm('Выйти из аккаунта? Данные на этом устройстве останутся.'))return;Cloud.signOut().then(()=>{syncSt='';render()});return;
-case 'newm':if(!confirm('Начать новый месяц? Отметки сохранятся, цели месяца начнут считаться с сегодня, шаги сбросятся.'))return;
-S.start=today();S.goals.forEach(g=>{if(g.type=='steps')g.steps.forEach(s=>{s.done=null})});break;
+case 'newm':if(!confirm('Начать новый месяц? Все отметки и цели сохранятся, месяц для отчёта Claude начнётся с сегодня.'))return;
+S.start=today();break;
 case 'rep':copyIO(report());return;
 case 'exp':S.bk=today();save();copyIO(JSON.stringify(S));toast('Копия готова. Сохрани её в Заметки');return;
 case 'imp':{let o;try{o=JSON.parse($('io').value)}catch(x){alert('Не удалось прочитать текст');return}
