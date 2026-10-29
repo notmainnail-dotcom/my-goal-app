@@ -64,6 +64,17 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .tcal button.td{box-shadow:inset 0 0 0 2px var(--ac)}
 .wcard{display:block;width:100%;text-align:left}
 .card>.st:first-child{border-top:0;padding-top:0}
+.tk{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--bd)}
+.tkc{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--bd);background:none;color:#fff;font-weight:800;font-size:14px;margin-top:1px;padding:0}
+.tk.dn .tkc{background:var(--ok);border-color:var(--ok)}
+.tk.dn .tkt span{color:var(--mu);text-decoration:line-through}
+.tkt{flex:1;min-width:0}
+.tkt span,.tkn span{display:block;font-size:15px;font-weight:600}
+.tkt small,.tkn small{display:block;font-size:12px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tkt small.late{color:var(--wr);font-weight:700}
+.tkn{display:block;width:100%;padding:9px 0;border-top:1px solid var(--bd)}
+.tkh{margin:16px 0 2px}
+.tke{padding:4px 0 2px}
 .why p{margin:4px 0 0;font-size:16px;font-style:italic;line-height:1.45}
 .ht small.dm{color:var(--ac);font-weight:700;margin-top:2px}
 .big2{font-size:26px;font-weight:800;color:var(--ok)}
@@ -353,6 +364,13 @@ if(!o.plan){o.plan={why:'Просыпаюсь рядом с любимым че�
 o.goals.forEach(g=>{if(g.type!='main')g.arch=1});
 if(!o.goals.some(g=>g.id=='gm1'))o.goals.unshift({id:'gm1',type:'main',area:'net',t:'Сети: OSPF, IS-IS и MPLS',start:'2026-10-26',wit:'',done:null,
 steps:[{x:'Рассказать Claude главу 6: OSPF и IS-IS',due:'2026-11-02',done:null},{x:'Рассказать Claude про MPLS',due:'2026-11-09',done:null}]})}
+o.tasks=o.tasks||[];
+// главная цель помечается звездой; если звезды нет ни у кого — главной считается первая активная цель со ступеньками
+if(!o.goals.some(g=>g.star)){const m=o.goals.find(g=>g.type=='main'&&!g.done&&!g.arch);if(m)m.star=true}
+// 29.10: цель-серия «14 дней подряд» по его личному якорю «Получилось» (создаётся один раз; личная — в отчёт не идёт)
+if(!o.plan.s14){o.plan.s14=1;if(!o.goals.some(g=>g.id=='gs14')){const h=o.habits.find(x=>/получил/i.test(x.n))||o.habits.find(x=>/успех/i.test(x.n));
+const src=h?h.id:'',ok=d=>!!(src&&o.logs[d]&&o.logs[d][src]);let d=ok(today())?today():ago(1),st=today();while(ok(d)){st=d;d=add(d,-1)}
+o.goals.push({id:'gs14',type:'streak',t:'14 дней подряд: «'+(h?h.n:'Получилось')+'»',src,n:14,start:st,priv:true})}}
 o.v=3;return o}
 function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}S=S&&S.v?migrate(S):init()}
 function store(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Не удалось сохранить')}}
@@ -374,6 +392,7 @@ const R={cfg:{start:o.start,shift:o.shift,moodNote:o.moodNote,shelf:o.shelf},deb
 food:{prof:o.food.prof,kcal:o.food.kcal,custom:o.food.custom,dishes:o.food.dishes,weight:o.food.weight}};
 o.habits.forEach((x,i)=>R['h:'+x.id]=Object.assign({o:i},x));
 o.goals.forEach((g,i)=>R['g:'+g.id]=Object.assign({o:i},g));
+o.tasks.forEach((x,i)=>R['k:'+x.id]=Object.assign({o:i},x));
 for(const d in o.logs)for(const h in o.logs[d])R['l:'+d+':'+h]=o.logs[d][h];
 for(const d in o.mood)R['m:'+d]=o.mood[d];
 for(const d in o.food.log)if(o.food.log[d].length)R['f:'+d]=o.food.log[d];
@@ -390,7 +409,7 @@ const o={v:3,start:c.start||today(),shift:c.shift||null,moodNote:c.moodNote||nul
 theme:loc.theme,bk:loc.bk,stop:loc.stop,plan:R.plan,logs:{},mood:{},
 food:{prof:f.prof||null,kcal:f.kcal||0,custom:f.custom||[],dishes:f.dishes||[],weight:f.weight||[],log:{}}};
 const list=p=>Object.keys(R).filter(k=>k.startsWith(p)).map(k=>R[k]).sort((a,b)=>a.o-b.o||(a.id<b.id?-1:1)).map(x=>{const y=Object.assign({},x);delete y.o;return y});
-o.habits=list('h:');o.goals=list('g:');
+o.habits=list('h:');o.goals=list('g:');o.tasks=list('k:');
 o.train={step:(R.tcfg||{}).step||2.5,ex:list('te:'),tpl:list('tt:'),people:list('tp:'),w:{}};
 for(const k in R){if(k.startsWith('l:')){const d=k.slice(2,12);(o.logs[d]=o.logs[d]||{})[k.slice(13)]=R[k]}
 else if(k.startsWith('m:'))o.mood[k.slice(2)]=R[k];else if(k.startsWith('f:'))o.food.log[k.slice(2)]=R[k];else if(k.startsWith('w:'))o.train.w[k.slice(2)]=R[k]}
@@ -503,12 +522,16 @@ const reportD=()=>add(S.start,30);
 const dayN=()=>diff(S.start,today())+1;
 function cnt(g){const e=endD();let n=0;for(const d in S.logs)if(d>=S.start&&d<=e&&S.logs[d][g.h])n++;return n}
 function pct(g){if(g.type=='count')return Math.min(100,Math.round(cnt(g)/(g.target||1)*100));const n=g.steps.length;return n?Math.round(g.steps.filter(s=>s.done).length/n*100):0}
-const mainG=()=>S.goals.find(g=>g.type=='main'&&!g.done&&!g.arch);
+const mainG=()=>S.goals.find(g=>g.type=='main'&&g.star&&!g.done&&!g.arch)||S.goals.find(g=>g.type=='main'&&!g.done&&!g.arch);
 const gPct=g=>g.steps.length?Math.round(g.steps.filter(s=>s.done).length/g.steps.length*100):0;
 const curStep=g=>g.steps.findIndex(s=>!s.done);
 const areaHab=a=>a=='body'?(gymHab()||{}).id:a; // у «Сетей» и «Английского» id привычек совпадают с ключом направления
 const dueTxt=d=>{const n=diff(today(),d);return n>0?'до '+fmtD(d)+', через '+n+' '+plural(n,'день','дня','дней'):n==0?'срок сегодня':'просрочено на '+(-n)+' '+plural(-n,'день','дня','дней')};
 function cntH(id,a,b){let n=0;for(const d in S.logs)if(d>=a&&d<=b&&S.logs[d][id])n++;return n}
+// цели-серии: день засчитан, если отмечена выбранная привычка («anc» — все якоря, любой уровень)
+const dayOK=(d,src)=>src=='anc'?S.habits.some(h=>h.a)&&S.habits.filter(h=>h.a).every(a=>logged(d,a.id)):!!src&&logged(d,src);
+function sCur(g){let d=dayOK(today(),g.src)?today():ago(1),n=0;while(d>=g.start&&dayOK(d,g.src)){n++;d=add(d,-1)}return n}
+function sRuns(g){let run=0,best=0,done=null;for(let d=g.start;d<=today();d=add(d,1)){if(dayOK(d,g.src)){run++;if(run>best)best=run;if(!done&&run>=g.n)done=d}else run=0}return{best,done}}
 function weekDone(id,key){const d=pd(key);d.setDate(d.getDate()-(d.getDay()+6)%7);const m=dk(d);for(let i=0;i<7;i++)if(logged(add(m,i),id))return true;return false}
 // 2/2: S.shift — любой день, который был первым днём смены
 const cyc=key=>((diff(S.shift,key)%4)+4)%4;
@@ -592,13 +615,14 @@ let h=head(dl,'Сегодня');
 const G=mainG(),gs=G?G.steps[curStep(G)]:null;
 h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
 `<p>${G?(gs?'Сейчас: '+esc(gs.x)+(gs.due?' · '+dueTxt(gs.due):''):''):'Выбери её во вкладке «Цели»'}</p>`+
-(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
+(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+S.goals.filter(g=>g.type=='streak'&&!g.arch&&!sRuns(g).done).map(g=>`<span class="chip">🔥 ${sCur(g)} из ${g.n}</span>`).join('')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
 if(n>30)h+=`<button class="note in" data-a="tab" data-t="more">🏁 30 дней прошли. Составь отчёт для Claude и начни новый месяц во вкладке «Ещё».</button>`;
 if(n>1&&anc.length&&!anc.some(a=>Y[a.id]||T[a.id]))h+=`<div class="note wr">⚠️ Вчера был пропуск. Сегодня хватит минимума: ${anc.map(a=>esc(a.n)+' '+esc(a.L[0])).join(', ')}. Два пропуска подряд нельзя.</div>`;
 if(heavy()&&(!S.moodNote||diff(S.moodNote,t)>=7))h+=`<div class="note in">Последние две недели много тяжёлых дней. Это не слабость и не лень. Если так держится, можно поговорить с психологом или врачом, это нормальный шаг.<button class="btn g" data-a="mnote" style="margin:10px 0 0">Понял</button></div>`;
 const bd=S.bk?diff(S.bk,t):null;
 if(!Cloud.user()&&((bd===null&&n>=3)||bd>=7))h+=`<button class="note am" data-a="tab" data-t="more">💾 ${bd===null?'Резервная копия ещё не делалась.':'Копия не делалась '+bd+' дн.'} Нажми, чтобы сделать.</button>`;
 wl().filter(x=>x.d==t&&!x.done).forEach(x=>h+=`<button class="note in" data-a="topen" data-id="${x.id}">🏋️ Сегодня в ${esc(x.t)}: ${esc(x.n)}${(x.p||'me')!='me'?' ('+esc(profOf(x.p).n)+')':''}</button>`);
+h+=tasksCard();
 h+=daySeg();
 S.habits.forEach(x=>h+=habCard(x,key));
 if(!S.habits.length)h+=`<button class="note in" data-a="tab" data-t="more">Привычек пока нет. Добавь их во вкладке «Ещё».</button>`;
@@ -780,6 +804,8 @@ if(me)w.items.forEach((it,ii)=>{const k=exKind(it);let best=null;it.sets.forEach
 if(best)L.push([w.d,'🥇','Рекорд: '+exName(it)+' '+setTxt(k,best)])})});
 S.debt.paid.forEach(x=>{const d=x.d.slice(0,10);if(d>=a)L.push([d,'💸','Выплата долга: '+fmt(x.s)])});
 for(const d in S.mood)if(d>=a&&S.mood[d].win)L.push([d,'✓',S.mood[d].win]);
+S.goals.forEach(g=>{if(g.type!='streak'||g.arch)return;const d=sRuns(g).done;if(d&&d>=a)L.push([d,'🔥','Серия '+g.n+' дней: '+g.t])});
+S.tasks.forEach(x=>{if(x.done&&x.done>=a)L.push([x.done,'✅','Задача: '+x.x])});
 return L.sort((x,y)=>x[0]<y[0]?1:x[0]>y[0]?-1:0)}
 // сравнение только с собой: прошлые 30 дней → последние 30
 function cmpRows(){const t=today(),a=ago(29),b0=ago(59),b1=ago(30);
@@ -789,6 +815,14 @@ const win=(x,y)=>Object.keys(S.mood).filter(d=>d>=x&&d<=y&&S.mood[d].win).length
 const R=[];if(hab('en'))R.push(['🇬🇧 Дней английского',cntH('en',b0,b1),cntH('en',a,t)]);if(hab('net'))R.push(['🌐 Дней сетей',cntH('net',b0,b1),cntH('net',a,t)]);
 R.push(['🏋️ Тренировок',me(b0,b1),me(a,t)],['🤝 Тренировок с другими',oth(b0,b1),oth(a,t)],['💸 Выплачено',pay(b0,b1),pay(a,t)],['✓ «Получилось»',win(b0,b1),win(a,t)]);
 return R.filter(r=>r[1]||r[2])}
+
+function goalCard(g){const gi=S.goals.indexOf(g),t=today();
+if(g.type=='streak'){const c=sCur(g),R=sRuns(g),ok=dayOK(t,g.src),N=Math.min(g.n,14);let w='';
+for(let i=N-1;i>=0;i--){const d=add(t,-i);w+=`<i class="${d>=g.start&&dayOK(d,g.src)?'on':''} ${i?'':'td'}">${WD[pd(d).getDay()]}</i>`}
+return `<div class="card" style="--c:#f97316"><div class="gh">${ring(Math.min(100,Math.round(c/g.n*100)),54,6,'#f97316','var(--soft)',13,c+'/'+g.n)}<div class="t">${esc(g.t)}<div class="mu">${!g.src?'Выбери привычку: нажми ✎':ok?'Сегодня засчитано ✓':'Сегодня ещё не отмечено'}${R.best>c?' · лучшая серия: '+R.best:''}${g.priv?' · 🔒 личное':''}</div></div><button class="ib" data-a="gsedit" data-id="${g.id}" aria-label="Изменить">✎</button></div><div class="wk">${w}</div></div>`}
+return `<div class="card"><div class="gh">${ring(gPct(g),54,6,'#6366f1','var(--soft)',13)}<div class="t">${esc(g.t)}<div class="mu">${g.steps.filter(x=>x.done).length} из ${g.steps.length} ступенек</div></div><button class="ib" data-a="gedit" data-g="${gi}" aria-label="Изменить">✎</button></div>`+
+g.steps.map((x,i)=>{const late=!x.done&&x.due&&x.due<t;return `<button class="st ${x.done?'d':''}" data-a="stp" data-g="${gi}" data-s="${i}"><b>${x.done?'✓':''}</b><span>${esc(x.x)}<small class="${x.done?'':'due'+(late?' late':'')}">${x.done?'сделано '+fmtD(x.done.slice(0,10)):x.due?dueTxt(x.due):''}</small></span></button>`+
+(late?`<button class="btn g" data-a="gshift" data-g="${gi}" data-s="${i}" style="margin:0 0 8px">Сдвинуть и уменьшить</button>`:'')}).join('')+'</div>'}
 
 function vGoals(){const t=today(),G=mainG();
 let h=head('Зачем, куда и что уже сделано','Цели');
@@ -803,6 +837,9 @@ h+=`<div class="row2"><button class="btn" data-a="gshare">📣 Отправит�
 if(!G.wit)h+='<div class="mu" style="padding:0 4px 4px">Свидетель — живой человек, который знает о цели. С ним держаться легче: укажи его в «Изменить» и отправь план.</div>'}
 else{const D=S.goals.filter(g=>g.type=='main'&&g.done&&!g.arch).sort((x,y)=>x.done<y.done?-1:1).pop();
 h+=`<div class="card">${D?`<b>🏆 Выполнено: ${esc(D.t)}</b><div class="mu" style="margin-top:4px">${fmtD(D.done)}. Пора выбрать следующую.</div>`:'<div class="mu">Одна цель, которую можно проверить: срок и 2–5 ступенек, каждая не дольше недели.</div>'}</div><button class="btn" data-a="gedit" data-g="-1">＋ Главная цель</button>`}
+const OG=S.goals.filter(g=>!g.arch&&g!==G&&(g.type=='main'||g.type=='streak')),act=OG.filter(g=>g.type=='streak'?!sRuns(g).done:!g.done),fin=OG.filter(g=>!act.includes(g));
+h+='<h2>Мои цели</h2>'+act.map(goalCard).join('')+'<button class="btn g" data-a="gadd">＋ Добавить цель</button>';
+if(fin.length)h+='<div class="card">'+fin.map(g=>`<button class="li plain" style="width:100%" data-a="${g.type=='streak'?'gsedit':'gedit'}" data-id="${g.id}" data-g="${S.goals.indexOf(g)}"><div class="ht"><b>🏆 ${esc(g.t)}</b><small>выполнено ${fmtD(g.type=='streak'?sRuns(g).done:g.done)}</small></div></button>`).join('')+'</div>';
 h+='<h2>Направления</h2><div class="card">'+DIRS.map(d=>`<button class="li plain" style="width:100%" data-a="gdir" data-k="${d[0]}"><div class="ico" style="--ct:var(--soft)">${d[1]}</div><div class="ht"><b>${d[2]}${G&&G.area==d[0]?'<span class="tag">главная</span>':''}</b><small>${esc((S.plan.dirs||{})[d[0]]||'')}</small><small class="dm">${dirMetric(d[0])}</small></div></button>`).join('')+'</div>';
 const C=cmpRows();
 if(C.length)h+='<h2>Месяц назад → сейчас</h2><div class="card"><div class="mu" style="margin-bottom:4px">Прошлые 30 дней → последние 30. Сравнение только с собой.</div>'+C.map(r=>`<div class="link"><span>${r[0]}</span><b>${fmt(r[1])} → <span style="color:${r[2]>r[1]?'var(--ok)':'inherit'}">${fmt(r[2])}</span></b></div>`).join('')+'</div>';
@@ -905,12 +942,13 @@ openSheet(gi>=0?'Главная цель':'Новая главная цель',
 `<label class="lb">Что именно будет готово</label><input class="in" id="f_gt" value="${esc(g.t)}" placeholder="Например: Сети — OSPF, IS-IS и MPLS">`+
 `<label class="lb">Направление</label><div class="chips" id="f_ga">${DIRS.map(d=>`<button type="button" class="${d[0]==g.area?'on':''}" data-a="fsel" data-v="${d[0]}">${d[1]} ${d[2]}</button>`).join('')}</div>`+
 `<label class="lb">Ступеньки и сроки, каждая не дольше недели</label>${rows.join('')}`+
-`<label class="lb">Свидетель: кто знает об этой цели</label><input class="in" id="f_gw" value="${esc(g.wit||'')}" placeholder="Имя живого человека">`,
+`<label class="lb">Свидетель: кто знает об этой цели</label><input class="in" id="f_gw" value="${esc(g.wit||'')}" placeholder="Имя живого человека">`+`<label class="chkrow"><input type="checkbox" id="f_gst" ${(gi>=0?(g.star||g===mainG()):!mainG())?'checked':''}>Главная: в кольце на «Сегодня»</label>`,
 ()=>{const t=$('f_gt').value.trim();if(!t){alert('Напиши цель');return}const st=[];
 for(let i=0;i<5;i++){const x=$('f_sx'+i).value.trim();if(!x)continue;const old=(g.steps||[]).find(o=>o.x==x);st.push({x,due:$('f_sd'+i).value||'',done:old?old.done:null})}
 if(!st.length){alert('Нужна хотя бы одна ступенька');return}
 Object.assign(g,{t,area:(document.querySelector('#f_ga .on')||{dataset:{v:'net'}}).dataset.v,wit:$('f_gw').value.trim(),steps:st});g.done=st.every(s=>s.done)?today():null;
-if(gi<0){g.id='gm'+Date.now().toString(36);g.start=today();S.goals.unshift(g)}return true},
+const star=$('f_gst').checked;if(star)S.goals.forEach(q=>{if(q!==g)q.star=false});g.star=star;
+if(gi<0){g.id='gm'+Date.now().toString(36);g.start=today();S.goals.push(g)}return true},
 gi>=0?()=>{if(!confirm('Удалить главную цель «'+g.t+'»? Её ступеньки пропадут из копилки.'))return;S.goals.splice(gi,1);return true}:null)}
 // не успел — уменьшаем ступеньку и переносим срок; следующие ступеньки сдвигаются на столько же
 function gShiftSheet(gi,si){const g=S.goals[gi],s=g.steps[si];
@@ -921,6 +959,57 @@ function txtSheet(title,label,v,hint,apply){openSheet(title,`<label class="lb">$
 function archSheet(){const A=S.goals.filter(g=>g.arch);
 openSheet('Старые цели',A.length?'<div class="mu" style="margin-bottom:8px">Цели из прошлой версии вкладки. Привычки и отметки от их удаления не пострадают.</div>'+
 A.map(g=>`<div class="li"><div class="ht"><b>${esc(g.t)}</b><small>${g.type=='count'?cnt(g)+' из '+g.target+' за месяц':(g.steps||[]).filter(s=>s.done).length+' из '+(g.steps||[]).length+' шагов'}</small></div><button class="ib" data-a="gadel" data-id="${g.id}" aria-label="Удалить">✕</button></div>`).join(''):'<div class="mu">Пусто.</div>',null,null)}
+
+function addGoalSheet(){openSheet('Новая цель','<button class="btn g" data-a="gnew1" style="text-align:left">🪜 Со ступеньками и сроками<br><small class="mu" style="font-weight:500">Например: «Сети: BGP» — 3 ступеньки по неделе</small></button>'+
+'<button class="btn g" data-a="gnew2" style="text-align:left">🔥 Серия дней подряд<br><small class="mu" style="font-weight:500">Например: 14 дней подряд отмечена привычка</small></button>',null,null)}
+function streakSheet(id){const g=id?S.goals.find(x=>x.id==id):{t:'',src:'anc',n:14,start:today(),priv:false},isNew=!id;if(!g)return;
+const opts=[['anc','Все якоря']].concat(S.habits.map(h=>[h.id,h.ic+' '+h.n]));
+openSheet(isNew?'Серия дней подряд':'Цель-серия',`<label class="lb">Название</label><input class="in" id="f_st" value="${esc(g.t)}" placeholder="Например: 14 дней подряд">`+
+`<label class="lb">Что засчитывает день</label><select class="in" id="f_ss">${g.src?'':'<option value="">— выбери привычку —</option>'}${opts.map(o=>`<option value="${esc(o[0])}" ${o[0]==g.src?'selected':''}>${esc(o[1])}</option>`).join('')}</select><div class="hint">День засчитан, если привычка отмечена, любой уровень. «Все якоря» — отмечены все якоря.</div>`+
+`<label class="lb">Сколько дней подряд</label><input class="in" id="f_sn" inputmode="numeric" value="${g.n}">`+
+(isNew?'<label class="chkrow"><input type="checkbox" id="f_scur" checked>Засчитать текущую серию, если она уже идёт</label>':'')+
+`<label class="chkrow"><input type="checkbox" id="f_spv" ${g.priv?'checked':''}>Личное: не включать в отчёт для Claude</label>`,
+()=>{const n=parseInt($('f_sn').value)||0,src=$('f_ss').value;if(!src){alert('Выбери привычку');return}if(n<2){alert('Нужно хотя бы 2 дня');return}
+Object.assign(g,{t:$('f_st').value.trim()||n+' дней подряд',src,n,priv:$('f_spv').checked});
+if(isNew){g.id='gs'+Date.now().toString(36);g.type='streak';let st=today();if($('f_scur').checked){let d=dayOK(today(),src)?today():ago(1);while(dayOK(d,src)){st=d;d=add(d,-1)}}g.start=st;S.goals.push(g)}return true},
+isNew?null:()=>{if(!confirm('Удалить цель «'+g.t+'»?'))return;S.goals=S.goals.filter(x=>x!==g);return true})}
+
+// ---------- задачи и заметки ----------
+// S.tasks: {id,k:'task'|'note',x,note,d:'YYYY-MM-DD'|'' (на какой день, можно на неделю вперёд),done:null|'YYYY-MM-DD'}
+let tkDone=false;
+const tkSort=(a,b)=>(a.d||'9999')<(b.d||'9999')?-1:(a.d||'9999')>(b.d||'9999')?1:0;
+const dayName=d=>{const n=diff(today(),d);return n==0?'Сегодня':n==1?'Завтра':n==-1?'Вчера':cap(pd(d).toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'short'}))};
+function taskRow(x){if(x.k=='note')return `<button class="tkn plain" data-a="tkedit" data-id="${x.id}"><span>📌 ${esc(x.x)}</span>${x.note?`<small>${esc(x.note)}</small>`:''}</button>`;
+const late=!x.done&&x.d&&x.d<today();
+return `<div class="tk ${x.done?'dn':''}"><button class="tkc" data-a="tkdo" data-id="${x.id}" aria-label="Выполнено">${x.done?'✓':''}</button><button class="plain tkt" data-a="tkedit" data-id="${x.id}"><span>${esc(x.x)}</span>${late||x.note?`<small class="${late?'late':''}">${late?'просрочено, было на '+fmtD(x.d):''}${x.note?(late?' · ':'')+esc(x.note):''}</small>`:''}</button></div>`}
+function tasksCard(){const t=today(),T=S.tasks;if(!T.some(x=>!x.done))return '<button class="btn g" data-a="tkall" style="margin:0 0 12px">📝 Задачи и заметки</button>';
+const cur=T.filter(x=>!x.done&&(x.k=='note'?x.d==t:(!x.d||x.d<=t))).sort(tkSort),up=T.filter(x=>!x.done&&x.d>t&&x.d<=add(t,6)).length;
+return `<div class="card"><div class="exh"><b style="flex:1">📝 Задачи</b><button class="ib" data-a="tkedit" data-id="" aria-label="Новая задача">＋</button><button class="chipb" data-a="tkall">Неделя${up?' · ещё '+up:''}</button></div>`+
+(cur.length?cur.slice(0,5).map(taskRow).join('')+(cur.length>5?`<div class="mu" style="margin-top:6px">и ещё ${cur.length-5}</div>`:''):'<div class="mu" style="margin-top:8px">На сегодня ничего. Остальное — в «Неделя».</div>')+'</div>'}
+function tasksBody(){const t=today(),T=S.tasks,open=T.filter(x=>!x.done),G=[];
+const late=open.filter(x=>x.k!='note'&&x.d&&x.d<t).sort(tkSort);if(late.length)G.push(['⚠️ Просрочено',late]);
+for(let i=0;i<7;i++){const d=add(t,i);G.push([dayName(d),open.filter(x=>x.d==d),d])}
+const later=open.filter(x=>x.d&&x.d>add(t,6)).sort(tkSort);if(later.length)G.push(['Позже',later]);
+const nod=open.filter(x=>!x.d);if(nod.length)G.push(['Без даты',nod]);
+const old=open.filter(x=>x.k=='note'&&x.d&&x.d<t).sort(tkSort).reverse();if(old.length)G.push(['Прошлые заметки',old]);
+let h='<div class="row2" style="margin-bottom:6px"><button class="btn" data-a="tkedit" data-id="" style="margin:0">＋ Задача</button><button class="btn g" data-a="tkedit" data-id="" data-k="note" style="margin:0">＋ Заметка</button></div>';
+G.forEach(([n,L,d])=>{h+=`<div class="exh tkh"><b style="flex:1">${n}</b>${d?`<button class="chipb" data-a="tkedit" data-id="" data-d="${d}" aria-label="Добавить на этот день">＋</button>`:''}</div>`+(L.length?L.map(taskRow).join(''):'<div class="mu tke">—</div>')});
+const D=T.filter(x=>x.done).sort((a,b)=>a.done<b.done?1:-1);
+if(D.length)h+=`<button class="btn g" data-a="tkdn" style="margin:14px 0 0">${tkDone?'Скрыть':'Показать'} выполненные (${D.length})</button>`+(tkDone?D.map(taskRow).join('')+'<button class="btn r" data-a="tkclr" style="margin:10px 0 0">Удалить выполненные</button>':'');
+return h}
+function tasksSheet(){openSheet('Задачи и заметки',`<div id="f_tk">${tasksBody()}</div>`,null,null)}
+function taskSheet(id,k,d){const fromAll=!!$('f_tk'),x=id?S.tasks.find(q=>q.id==id):{id:'',k:k||'task',x:'',note:'',d:d!==undefined?d:today(),done:null};if(!x)return;
+const t=today(),days=[''].concat([0,1,2,3,4,5,6].map(i=>add(t,i)));if(x.d&&!days.includes(x.d))days.push(x.d);
+openSheet(id?(x.k=='note'?'Заметка':'Задача'):(x.k=='note'?'Новая заметка':'Новая задача'),
+seg('tk',[['task','✅ Задача'],['note','📌 Заметка']],x.k)+
+`<label class="lb">Что</label><input class="in" id="f_kx" value="${esc(x.x)}" placeholder="Например: позвонить в банк">`+
+`<label class="lb">Подробности</label><textarea class="in" id="f_kn" rows="3" placeholder="Необязательно">${esc(x.note||'')}</textarea>`+
+`<label class="lb">На какой день</label><div class="chips" id="f_kc">${days.map(v=>`<button type="button" class="${v==(x.d||'')?'on':''}" data-a="tkd" data-v="${v}">${v?dayName(v):'Без даты'}</button>`).join('')}</div>`+
+`<input class="in" type="date" id="f_kd" value="${x.d||''}" style="margin-top:8px"><div class="hint">Другая дата — в календаре выше.</div>`,
+()=>{const v=$('f_kx').value.trim();if(!v){alert('Напиши, что именно');return}
+Object.assign(x,{k:val('tk')||'task',x:v,note:$('f_kn').value.trim(),d:$('f_kd').value||''});
+if(!id){x.id=uid('k');S.tasks.push(x)}if(fromAll)setTimeout(tasksSheet,0);return true},
+id?()=>{if(!confirm('Удалить «'+x.x+'»?'))return;S.tasks=S.tasks.filter(q=>q!==x);if(fromAll)setTimeout(tasksSheet,0);return true}:null)}
 
 function numSheet(title,label,v,apply){
 openSheet(title,`<label class="lb">${label}</label><input class="in" id="f_v" inputmode="decimal" value="${v}" placeholder="0">`,
@@ -1139,6 +1228,9 @@ const G=mainG();
 r+=G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
 r+='Направления:\n'+DIRS.map(d=>`- ${d[2]}: ${dirMetric(d[0]).replace(/<[^>]+>/g,'')}`).join('\n')+'\n';
 r+=`Копилка за 30 дней: ${piggy(30).length}\n`;
+const OG=S.goals.filter(g=>!g.arch&&!g.priv&&g!==G&&(g.type=='main'||g.type=='streak'));
+if(OG.length)r+='Другие цели:\n'+OG.map(g=>g.type=='streak'?`- ${g.t}: серия ${sCur(g)} из ${g.n}${sRuns(g).done?', выполнено':''}`:`- ${g.t}: ${gPct(g)}%${g.done?', выполнено':''}`).join('\n')+'\n';
+if(S.tasks.length)r+=`Задачи: открыто ${S.tasks.filter(x=>x.k!='note'&&!x.done).length}, сделано за 7 дней ${S.tasks.filter(x=>x.done&&x.done>=ago(6)).length}\n`;
 r+='Привычки за последние 7 дней:\n';
 S.habits.forEach(x=>{let k=0;for(let i=0;i<7;i++)if(logged(ago(i),x.id))k++;r+=`- ${x.n}: ${k} из 7\n`});
 const ms=[];for(let i=6;i>=0;i--){const k=ago(i);if(S.mood[k])ms.push([k,S.mood[k]])}
@@ -1165,7 +1257,7 @@ function applyTheme(){const r=document.documentElement;if(S.theme=='auto')r.remo
 document.querySelector('meta[name=theme-color]').content=getComputedStyle(r).getPropertyValue('--bg').trim()}
 
 document.addEventListener('input',e=>{const id=e.target.id;
-if(id=='f_q')$('f_res').innerHTML=foodList(e.target.value);else if(id=='f_a'&&curFood)pv(curFood);else if(id=='f_xq')$('f_xr').innerHTML=exList(e.target.value)});
+if(id=='f_q')$('f_res').innerHTML=foodList(e.target.value);else if(id=='f_a'&&curFood)pv(curFood);else if(id=='f_xq')$('f_xr').innerHTML=exList(e.target.value);else if(id=='f_kd')document.querySelectorAll('#f_kc button').forEach(q=>q.classList.toggle('on',q.dataset.v==e.target.value))});
 
 document.addEventListener('click',e=>{
 const b=e.target.closest('[data-a]');if(!b)return;
@@ -1189,6 +1281,16 @@ case 'stp':{const g=S.goals[D.g],s=g.steps[D.s];s.done=s.done?null:nowS();
 if(g.type=='main'){const all=g.steps.every(x=>x.done);g.done=all?today():null;if(all){toast('🏆 Цель выполнена!');break}}
 if(s.done)toast('Ступенька засчитана ✓');break}
 case 'gedit':mainSheet(+D.g);return;
+case 'gadd':addGoalSheet();return;
+case 'gnew1':mainSheet(-1);return;
+case 'gnew2':streakSheet(null);return;
+case 'gsedit':streakSheet(D.id);return;
+case 'tkall':tasksSheet();return;
+case 'tkedit':taskSheet(D.id,D.k,D.d);return;
+case 'tkd':$('f_kd').value=D.v;b.parentNode.querySelectorAll('button').forEach(q=>q.classList.toggle('on',q==b));return;
+case 'tkdo':{const x=S.tasks.find(q=>q.id==D.id);if(!x)return;x.done=x.done?null:today();if(x.done)toast('✓ Сделано');save();render();if($('f_tk'))$('f_tk').innerHTML=tasksBody();return}
+case 'tkdn':tkDone=!tkDone;$('f_tk').innerHTML=tasksBody();return;
+case 'tkclr':if(!confirm('Удалить все выполненные задачи? Из копилки они тоже пропадут.'))return;S.tasks=S.tasks.filter(x=>!x.done);save();render();$('f_tk').innerHTML=tasksBody();return;
 case 'gshift':gShiftSheet(+D.g,+D.s);return;
 case 'gwhy':txtSheet('Зачем','Какой жизни я хочу',S.plan.why,'Твоими словами. Это видно наверху вкладки «Цели».',v=>{S.plan.why=v;return true});return;
 case 'gdir':{const d=DIRS.find(x=>x[0]==D.k);txtSheet(d[1]+' '+d[2],'Цель направления',(S.plan.dirs||{})[D.k],'Цифры под целью считаются сами из привычек, тренировок и долгов.',v=>{S.plan.dirs=S.plan.dirs||{};S.plan.dirs[D.k]=v;return true});return}
