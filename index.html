@@ -309,7 +309,13 @@ const RECIPES=[
 ['Арахис и изюм','Из магазина',[['Арахис',50],['Изюм',30]],'Пачка орехов и горсть изюма. Удобно держать у компьютера.'],
 ['Грецкие орехи и банан','Из магазина',[['Грецкие орехи',30],['Банан',120]],'Горсть орехов и банан: лёгкий перекус с полезными жирами.'],
 ['Сырки и молоко','Из магазина',[['Сырок глазированный',90],['Молоко 3,2%',250]],'2 сырка и стакан молока, если совсем нет времени. Сладко, поэтому не каждый день.'],
-['Бананы и сок','Из магазина',[['Банан',240],['Сок апельсиновый',250]],'Быстрые углеводы, например за час до зала.']];
+['Бананы и сок','Из магазина',[['Банан',240],['Сок апельсиновый',250]],'Быстрые углеводы, например за час до зала.'],
+['Чечевица с курицей и луком','15 минут',[['Чечевица варёная',250],['Куриная грудка варёная',150],['Лук репчатый',40],['Масло подсолнечное',10]],'Красная чечевица варится 15 минут без замачивания. Лук обжарить на масле, смешать с чечевицей и курицей. Можно сварить сразу на 2–3 дня.'],
+['Чечевичный суп с морковью','25 минут',[['Чечевица варёная',200],['Морковь',80],['Лук репчатый',40],['Масло подсолнечное',10],['Хлеб ржаной',30]],'Красную чечевицу, тёртую морковь и лук варить 20 минут, посолить, можно размять до пюре. С куском хлеба.'],
+['Чечевица с яйцами и сыром','10 минут',[['Чечевица варёная',200],['Яйцо куриное',110],['Сыр твёрдый',30],['Масло сливочное',10]],'Готовую чечевицу разогреть на сковороде с маслом, вбить 2 яйца, сверху натереть сыр.'],
+['Булгур с фаршем и помидором','20 минут',[['Булгур варёный',250],['Фарш свино-говяжий',120],['Лук репчатый',40],['Помидор',120]],'Булгур варится 15 минут. Пока варится, фарш обжарить с луком и помидором, потом смешать.'],
+['Булгур с курицей и морковью','20 минут',[['Булгур варёный',250],['Куриная грудка варёная',150],['Морковь',80],['Масло подсолнечное',10]],'Сварить булгур, морковь обжарить на масле, добавить курицу (готовую или из вчерашней) и перемешать.'],
+['Булгур с тунцом и овощами (салат)','10 минут',[['Булгур варёный',200],['Тунец консервированный',140],['Огурец',100],['Помидор',120],['Масло подсолнечное',10]],'Готовый булгур остудить, порезать огурец и помидор, добавить тунец и ложку масла. Хорошо брать с собой.']];
 const RC=RECIPES.map(r=>{const it=r[2].map(([n,g])=>({x:FOODS.find(a=>a[0]==n),g}));
 const s=it.reduce((a,o)=>{const m=o.g/100;return{k:a.k+o.x[1]*m,p:a.p+o.x[2]*m,f:a.f+o.x[3]*m,c:a.c+o.x[4]*m,g:a.g+o.g}},{k:0,p:0,f:0,c:0,g:0});
 return{n:r[0],t:r[1],how:r[3],it,g:s.g,k:Math.round(s.k),p:Math.round(s.p),f:Math.round(s.f),c:Math.round(s.c)}});
@@ -371,6 +377,17 @@ if(!o.goals.some(g=>g.star)){const m=o.goals.find(g=>g.type=='main'&&!g.done&&!g
 if(!o.plan.s14){o.plan.s14=1;if(!o.goals.some(g=>g.id=='gs14')){const h=o.habits.find(x=>/получил/i.test(x.n))||o.habits.find(x=>/успех/i.test(x.n));
 const src=h?h.id:'',ok=d=>!!(src&&o.logs[d]&&o.logs[d][src]);let d=ok(today())?today():ago(1),st=today();while(ok(d)){st=d;d=add(d,-1)}
 o.goals.push({id:'gs14',type:'streak',t:'14 дней подряд: «'+(h?h.n:'Получилось')+'»',src,n:14,start:st,priv:true})}}
+// 1.11.2026: план ноября, согласованный с ним — сети до L3VPN, вес 65 кг, английский рассказ, цифры плана месяца (один раз)
+if(!o.plan.nov){o.plan.nov=1;o.plan.mt=o.plan.mt||{en:24,net:24,gym:12,food:20,weigh:4};
+const m=o.goals.find(g=>g.id=='gm1');if(m&&!m.arch){m.t='Сети: OSPF/IS-IS → MPLS → L2VPN и L3VPN';
+m.steps.forEach(x=>{if(x.x=='Рассказать Claude про MPLS')x.x='Рассказать Claude про базовый MPLS'});
+const add2=(x,due)=>{if(!m.steps.some(q=>q.x==x))m.steps.push({x,due,done:null})};
+add2('Рассказать Claude про L2VPN','2026-11-16');add2('Рассказать Claude про L3VPN','2026-11-23');add2('Запас: повторить и рассказать путь пакета через сеть провайдера','2026-11-30');
+if(!m.steps.every(x=>x.done))m.done=null}
+if(!o.goals.some(g=>g.id=='gw65')){const W=o.food.weight;o.goals.push({id:'gw65',type:'num',t:'Вес 65 кг',target:65,due:'2026-11-30',start:today(),from:W.length?W[W.length-1].kg:null})}
+if(!o.goals.some(g=>g.id=='gen1'))o.goals.push({id:'gen1',type:'main',area:'en',t:'Английский: рассказ о себе и проверка',start:today(),wit:'',done:null,star:false,
+steps:[{x:'Рассказ о себе по-английски: 8–10 предложений, Claude разбирает ошибки',due:'2026-11-08',done:null},{x:'Недельная проверка в приложении английского от 80%',due:'2026-11-30',done:null}]});
+if(o.plan.dirs&&o.plan.dirs.body=='Тренироваться регулярно')o.plan.dirs.body='Тренироваться регулярно · 65 кг к 30 ноября'}
 o.v=3;return o}
 function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}S=S&&S.v?migrate(S):init()}
 function store(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast('Не удалось сохранить')}}
@@ -573,7 +590,7 @@ if(!c&&x.a&&isShift(key)===false)sub='Выходной: хватит миним�
 let w='';for(let i=6;i>=0;i--){const d=add(key,-i);w+=`<i class="${logged(d,x.id)?'on':''} ${i?'':'td'}">${WD[pd(d).getDay()]}</i>`}
 let nx='';S.goals.forEach((g,gi)=>{if(g.arch||g.done)return;const hid=g.type=='main'?areaHab(g.area):g.type=='steps'?g.h:null;if(!hid||hid!=x.id)return;
 const si=g.steps.findIndex(s=>!s.done);if(si<0)return;const s=g.steps[si];
-nx+=`<button class="st nx" data-a="stp" data-g="${gi}" data-s="${si}"><b></b><span><small>${g.type=='main'?'Главная цель · ступенька '+(si+1)+' из '+g.steps.length:'Следующий шаг'}</small>${esc(s.x)}${s.due?`<small class="due ${s.due<today()?'late':''}">${dueTxt(s.due)}</small>`:''}</span></button>`});
+nx+=`<button class="st nx" data-a="stp" data-g="${gi}" data-s="${si}"><b></b><span><small>${g.type=='main'?(g===mainG()?'Главная цель':'Цель')+' · ступенька '+(si+1)+' из '+g.steps.length:'Следующий шаг'}</small>${esc(s.x)}${s.due?`<small class="due ${s.due<today()?'late':''}">${dueTxt(s.due)}</small>`:''}</span></button>`});
 return `<div class="hab ${on?'done':''}" style="${hs(x)}"><div class="hrow" data-a="hcal" data-h="${esc(x.id)}"><div class="ico">${esc(x.ic)}</div><div class="ht"><b>${esc(x.n)}${x.a?'<span class="tag">якорь</span>':''}</b><small>${sub}</small></div><div class="ok">${on?'✓':''}</div></div>`+
 `<div class="lv">${x.L.map((l,i)=>`<button class="${c==i+1?'on':''}" data-a="lv" data-h="${esc(x.id)}" data-i="${i+1}">${esc(l)}</button>`).join('')}</div>${nx}<div class="wk" data-a="hcal" data-h="${esc(x.id)}">${w}</div></div>`}
 
@@ -805,6 +822,7 @@ if(best)L.push([w.d,'🥇','Рекорд: '+exName(it)+' '+setTxt(k,best)])})});
 S.debt.paid.forEach(x=>{const d=x.d.slice(0,10);if(d>=a)L.push([d,'💸','Выплата долга: '+fmt(x.s)])});
 for(const d in S.mood)if(d>=a&&S.mood[d].win)L.push([d,'✓',S.mood[d].win]);
 S.goals.forEach(g=>{if(g.type!='streak'||g.arch)return;const d=sRuns(g).done;if(d&&d>=a)L.push([d,'🔥','Серия '+g.n+' дней: '+g.t])});
+S.goals.forEach(g=>{if(g.type!='num'||g.arch)return;const d=numDone(g);if(d&&d>=a)L.push([d,'🏆','Цель выполнена: '+g.t])});
 S.tasks.forEach(x=>{if(x.done&&x.done>=a)L.push([x.done,'✅','Задача: '+x.x])});
 return L.sort((x,y)=>x[0]<y[0]?1:x[0]>y[0]?-1:0)}
 // сравнение только с собой: прошлые 30 дней → последние 30
@@ -816,7 +834,12 @@ const R=[];if(hab('en'))R.push(['🇬🇧 Дней английского',cntH(
 R.push(['🏋️ Тренировок',me(b0,b1),me(a,t)],['🤝 Тренировок с другими',oth(b0,b1),oth(a,t)],['💸 Выплачено',pay(b0,b1),pay(a,t)],['✓ «Получилось»',win(b0,b1),win(a,t)]);
 return R.filter(r=>r[1]||r[2])}
 
+const numDone=g=>(S.food.weight.find(x=>x.d>=g.start&&x.kg>=g.target)||{}).d||null;
+const gDoneAt=g=>g.type=='streak'?sRuns(g).done:g.type=='num'?numDone(g):g.done;
 function goalCard(g){const gi=S.goals.indexOf(g),t=today();
+if(g.type=='num'){const cur=lastW(),st=g.from||cur,dn=numDone(g),pc=cur&&g.target!=st?Math.max(0,Math.min(100,Math.round((cur-st)/(g.target-st)*100))):0,
+wk=g.due?Math.max(1,diff(t,g.due)/7):0,need=cur&&g.due&&!dn?(g.target-cur)/wk:0;
+return `<div class="card"><div class="gh">${ring(dn?100:pc,54,6,'#10b981','var(--soft)',13,dn?'✓':pc+'%')}<div class="t">${esc(g.t)}<div class="mu">${cur?fmt(st)+' → сейчас '+fmt(cur)+' → цель '+fmt(g.target)+' кг':'Запиши вес во вкладке «Еда»'}${dn?' · 🏆 '+fmtD(dn):g.due?' · '+dueTxt(g.due):''}${need>0?' · нужно ≈ +'+fmt(+need.toFixed(2))+' кг в неделю':''}</div></div><button class="ib" data-a="gnedit" data-id="${g.id}" aria-label="Изменить">✎</button></div></div>`}
 if(g.type=='streak'){const c=sCur(g),R=sRuns(g),ok=dayOK(t,g.src),N=Math.min(g.n,14);let w='';
 for(let i=N-1;i>=0;i--){const d=add(t,-i);w+=`<i class="${d>=g.start&&dayOK(d,g.src)?'on':''} ${i?'':'td'}">${WD[pd(d).getDay()]}</i>`}
 return `<div class="card" style="--c:#f97316"><div class="gh">${ring(Math.min(100,Math.round(c/g.n*100)),54,6,'#f97316','var(--soft)',13,c+'/'+g.n)}<div class="t">${esc(g.t)}<div class="mu">${!g.src?'Выбери привычку: нажми ✎':ok?'Сегодня засчитано ✓':'Сегодня ещё не отмечено'}${R.best>c?' · лучшая серия: '+R.best:''}${g.priv?' · 🔒 личное':''}</div></div><button class="ib" data-a="gsedit" data-id="${g.id}" aria-label="Изменить">✎</button></div><div class="wk">${w}</div></div>`}
@@ -837,9 +860,10 @@ h+=`<div class="row2"><button class="btn" data-a="gshare">📣 Отправит�
 if(!G.wit)h+='<div class="mu" style="padding:0 4px 4px">Свидетель — живой человек, который знает о цели. С ним держаться легче: укажи его в «Изменить» и отправь план.</div>'}
 else{const D=S.goals.filter(g=>g.type=='main'&&g.done&&!g.arch).sort((x,y)=>x.done<y.done?-1:1).pop();
 h+=`<div class="card">${D?`<b>🏆 Выполнено: ${esc(D.t)}</b><div class="mu" style="margin-top:4px">${fmtD(D.done)}. Пора выбрать следующую.</div>`:'<div class="mu">Одна цель, которую можно проверить: срок и 2–5 ступенек, каждая не дольше недели.</div>'}</div><button class="btn" data-a="gedit" data-g="-1">＋ Главная цель</button>`}
-const OG=S.goals.filter(g=>!g.arch&&g!==G&&(g.type=='main'||g.type=='streak')),act=OG.filter(g=>g.type=='streak'?!sRuns(g).done:!g.done),fin=OG.filter(g=>!act.includes(g));
+const OG=S.goals.filter(g=>!g.arch&&g!==G&&(g.type=='main'||g.type=='streak'||g.type=='num')),act=OG.filter(g=>!gDoneAt(g)),fin=OG.filter(g=>!act.includes(g));
+h+=monthCard();
 h+='<h2>Мои цели</h2>'+act.map(goalCard).join('')+'<button class="btn g" data-a="gadd">＋ Добавить цель</button>';
-if(fin.length)h+='<div class="card">'+fin.map(g=>`<button class="li plain" style="width:100%" data-a="${g.type=='streak'?'gsedit':'gedit'}" data-id="${g.id}" data-g="${S.goals.indexOf(g)}"><div class="ht"><b>🏆 ${esc(g.t)}</b><small>выполнено ${fmtD(g.type=='streak'?sRuns(g).done:g.done)}</small></div></button>`).join('')+'</div>';
+if(fin.length)h+='<div class="card">'+fin.map(g=>`<button class="li plain" style="width:100%" data-a="${{streak:'gsedit',num:'gnedit'}[g.type]||'gedit'}" data-id="${g.id}" data-g="${S.goals.indexOf(g)}"><div class="ht"><b>🏆 ${esc(g.t)}</b><small>выполнено ${fmtD(gDoneAt(g))}</small></div></button>`).join('')+'</div>';
 h+='<h2>Направления</h2><div class="card">'+DIRS.map(d=>`<button class="li plain" style="width:100%" data-a="gdir" data-k="${d[0]}"><div class="ico" style="--ct:var(--soft)">${d[1]}</div><div class="ht"><b>${d[2]}${G&&G.area==d[0]?'<span class="tag">главная</span>':''}</b><small>${esc((S.plan.dirs||{})[d[0]]||'')}</small><small class="dm">${dirMetric(d[0])}</small></div></button>`).join('')+'</div>';
 const C=cmpRows();
 if(C.length)h+='<h2>Месяц назад → сейчас</h2><div class="card"><div class="mu" style="margin-bottom:4px">Прошлые 30 дней → последние 30. Сравнение только с собой.</div>'+C.map(r=>`<div class="link"><span>${r[0]}</span><b>${fmt(r[1])} → <span style="color:${r[2]>r[1]?'var(--ok)':'inherit'}">${fmt(r[2])}</span></b></div>`).join('')+'</div>';
@@ -961,7 +985,56 @@ openSheet('Старые цели',A.length?'<div class="mu" style="margin-bottom
 A.map(g=>`<div class="li"><div class="ht"><b>${esc(g.t)}</b><small>${g.type=='count'?cnt(g)+' из '+g.target+' за месяц':(g.steps||[]).filter(s=>s.done).length+' из '+(g.steps||[]).length+' шагов'}</small></div><button class="ib" data-a="gadel" data-id="${g.id}" aria-label="Удалить">✕</button></div>`).join(''):'<div class="mu">Пусто.</div>',null,null)}
 
 function addGoalSheet(){openSheet('Новая цель','<button class="btn g" data-a="gnew1" style="text-align:left">🪜 Со ступеньками и сроками<br><small class="mu" style="font-weight:500">Например: «Сети: BGP» — 3 ступеньки по неделе</small></button>'+
-'<button class="btn g" data-a="gnew2" style="text-align:left">🔥 Серия дней подряд<br><small class="mu" style="font-weight:500">Например: 14 дней подряд отмечена привычка</small></button>',null,null)}
+'<button class="btn g" data-a="gnew2" style="text-align:left">🔥 Серия дней подряд<br><small class="mu" style="font-weight:500">Например: 14 дней подряд отмечена привычка</small></button>'+
+'<button class="btn g" data-a="gnew3" style="text-align:left">⚖️ Вес к сроку<br><small class="mu" style="font-weight:500">Например: 65 кг к 30 ноября — считается по взвешиваниям</small></button>',null,null)}
+function wgoalSheet(id){const g=id?S.goals.find(x=>x.id==id):{t:'',target:'',due:add(today(),30),from:lastW()};if(!g)return;
+openSheet(id?'Цель по весу':'Вес к сроку',`<label class="lb">Цель, кг</label><input class="in" id="f_wt" inputmode="decimal" value="${g.target||''}"><label class="lb">К какому дню</label><input class="in" type="date" id="f_wd" value="${g.due||''}"><div class="hint">Старт: ${g.from?fmt(g.from)+' кг':'вес ещё не записан'}. Прогресс считается сам по взвешиваниям во вкладке «Еда».</div>`,
+()=>{const n=num($('f_wt').value);if(!(n>30&&n<250)){alert('Проверь вес');return}Object.assign(g,{t:'Вес '+fmt(n)+' кг',target:n,due:$('f_wd').value||''});
+if(!id){g.id='gw'+Date.now().toString(36);g.type='num';g.start=today();g.from=lastW();S.goals.push(g)}return true},
+id?()=>{if(!confirm('Удалить цель «'+g.t+'»?'))return;S.goals=S.goals.filter(x=>x!==g);return true}:null)}
+
+// ---------- план и итоги месяца ----------
+// месяц — 30 дней с «Начать новый месяц»; цифры плана в S.plan.mt. ✅ выполнено, ⏳ ещё можно успеть, ❌ уже не успеть
+const MT_DEF={en:24,net:24,gym:12,food:20,weigh:4};
+function monthRows(a,b){const t=today(),left=t<=b?diff(t,b)+1:0,mt=Object.assign({},MT_DEF,S.plan.mt||{}),R=[];
+if(hab('en'))R.push(['🇬🇧 Английский, дней',cntH('en',a,b),mt.en]);
+if(hab('net'))R.push(['🌐 Сети, дней',cntH('net',a,b),mt.net]);
+R.push(['🏋️ Тренировок',wp('me').filter(w=>w.done&&w.d>=a&&w.d<=b).length,mt.gym]);
+R.push(['🍽 Еда записана, дней',Object.keys(S.food.log).filter(d=>d>=a&&d<=b&&S.food.log[d].length).length,mt.food]);
+R.push(['⚖️ Взвешиваний',S.food.weight.filter(x=>x.d>=a&&x.d<=b).length,mt.weigh]);
+return R.map(r=>r.concat(r[1]>=r[2]?'ok':r[1]+left>=r[2]?'go':'no'))}
+// самый длинный пропуск якорей учёбы (английский и сети), сегодня не считается, пока день не кончился
+function maxMiss(a,b){const A=['en','net'].filter(hab).length?['en','net'].filter(hab):S.habits.filter(h=>h.a).map(h=>h.id);if(!A.length)return 0;
+let m=0,run=0;for(let d=a;d<=b&&d<today();d=add(d,1)){if(A.some(id=>logged(d,id)))run=0;else{run++;if(run>m)m=run}}return m}
+function stepRows(a,b){const L=[];S.goals.forEach(g=>{if(g.arch||g.priv||g.type!='main')return;g.steps.forEach(x=>{if(!x.due||x.due<a||x.due>b)return;
+L.push([g.t,x.x,x.due,x.done?(x.done.slice(0,10)<=x.due?'ok':'late'):x.due<today()?'no':'go'])})});return L.sort((x,y)=>x[2]<y[2]?-1:1)}
+function monthTotals(a,b){const W=wp('me').filter(w=>w.done&&w.d>=a&&w.d<=b);let ton=0,rec=0;
+W.forEach(w=>{ton+=wStats(w).ton;w.items.forEach((it,ii)=>{if(it.sets.some((x,si)=>x.ok&&isRec(w,ii,si)))rec++})});
+const FD=Object.keys(S.food.log).filter(d=>d>=a&&d<=b&&S.food.log[d].length).map(dayFood),Wt=S.food.weight.filter(x=>x.d>=a&&x.d<=b),
+M=Object.keys(S.mood).filter(d=>d>=a&&d<=b).map(d=>S.mood[d]),am=M.filter(m=>m.am).map(m=>m.am),pm=M.filter(m=>m.pm).map(m=>m.pm),rl=M.filter(m=>m.rule!==undefined);
+return{tr:W.length,ton,rec,fd:FD.length,kcal:FD.length?Math.round(avg(FD.map(x=>x.k))):0,prot:FD.length?Math.round(avg(FD.map(x=>x.p))):0,
+w0:Wt.length?Wt[0].kg:null,w1:Wt.length?Wt[Wt.length-1].kg:null,am:am.length?avg(am).toFixed(1):'—',pm:pm.length?avg(pm).toFixed(1):'—',heavy:pm.filter(v=>v<=2).length,
+rule:rl.filter(m=>m.rule).length,ruleN:rl.length,tasks:S.tasks.filter(x=>x.done&&x.done>=a&&x.done<=b).length}}
+function monthCard(){const a=S.start,b=endD(),R=monthRows(a,b),mm=maxMiss(a,b),SR=stepRows(a,b),ic={ok:'✅',go:'⏳',no:'❌',late:'🟡'};
+return `<h2>План месяца · ${fmtD(a)} — ${fmtD(b)}</h2><div class="card">`+R.map(r=>`<div class="link"><span>${ic[r[3]]} ${r[0]}</span><b>${r[1]} / ${r[2]}</b></div>`).join('')+
+`<div class="link"><span>${mm>=2?'❌':'✅'} Без двух пропусков подряд</span><b>${mm>=2?'был':'держится'}</b></div>`+
+SR.map(x=>`<div class="link"><span>${ic[x[3]]} ${esc(x[1])}</span><b style="flex:none">${fmtD(x[2])}</b></div>`).join('')+
+'<div class="mu" style="margin-top:8px">✅ сделано · ⏳ ещё успеваешь · ❌ уже не успеть · 🟡 с опозданием</div><button class="btn g" data-a="mtedit" style="margin:10px 0 0">✎ Цифры плана</button></div>'}
+function mtSheet(){const mt=Object.assign({},MT_DEF,S.plan.mt||{}),F=[['en','Английский, дней'],['net','Сети, дней'],['gym','Тренировок'],['food','Еда записана, дней'],['weigh','Взвешиваний']];
+openSheet('Цифры плана месяца',F.map(([k,l])=>`<label class="lb">${l}</label><input class="in" id="f_m${k}" inputmode="numeric" value="${mt[k]}">`).join('')+'<div class="hint">Месяц — 30 дней с «Начать новый месяц» во вкладке «Ещё». Ступеньки целей со сроком в этом месяце попадают в план сами.</div>',
+()=>{const o={};for(const [k] of F){const n=parseInt($('f_m'+k).value);if(!(n>=0)){alert('Проверь числа');return}o[k]=n}S.plan.mt=o;return true},null)}
+function monthReport(){const a=S.start,b=endD(),T=monthTotals(a,b),P=monthTotals(add(a,-30),add(a,-1)),mk={ok:'✓',go:'в процессе',no:'✗'},SR=stepRows(a,b);
+let r=`ПЛАН МЕСЯЦА ${a} — ${b} (факт / план):\n`+monthRows(a,b).map(x=>`- ${x[0]}: ${x[1]} / ${x[2]} ${mk[x[3]]}`).join('\n')+'\n';
+r+=`- Без двух пропусков якорей подряд: ${maxMiss(a,b)>=2?'✗ был':'✓'}\n`;
+if(SR.length)r+=SR.map(x=>`- «${x[1]}» к ${x[2]}: ${({ok:'в срок ✓',late:'с опозданием',no:'не сделано ✗',go:'впереди'})[x[3]]}`).join('\n')+'\n';
+r+='ЗА МЕСЯЦ (в скобках — предыдущие 30 дней):\n';
+r+=`- Тренировок: ${T.tr} (${P.tr}), тоннаж ${fmt(T.ton)} кг, упражнений с рекордом: ${T.rec}\n`;
+r+=`- Еда записана: ${T.fd} дн. (${P.fd}), в среднем ${T.kcal} ккал и белок ${T.prot} г\n`;
+if(T.w1!==null)r+=`- Вес за месяц: ${T.w0} → ${T.w1} кг\n`;
+r+=`- Настроение: утро ${T.am} (${P.am}), итог дня ${T.pm} (${P.pm}), тяжёлых дней ${T.heavy}\n`;
+if(T.ruleN)r+=`- Правило 4 часов: соблюдено ${T.rule} из ${T.ruleN} отмеченных смен\n`;
+r+=`- Задач сделано: ${T.tasks}\n`;
+return r}
 function streakSheet(id){const g=id?S.goals.find(x=>x.id==id):{t:'',src:'anc',n:14,start:today(),priv:false},isNew=!id;if(!g)return;
 const opts=[['anc','Все якоря']].concat(S.habits.map(h=>[h.id,h.ic+' '+h.n]));
 openSheet(isNew?'Серия дней подряд':'Цель-серия',`<label class="lb">Название</label><input class="in" id="f_st" value="${esc(g.t)}" placeholder="Например: 14 дней подряд">`+
@@ -1222,14 +1295,14 @@ openSheet('Красная кнопка',`<label class="lb">Зачем я мен�
 // ---------- отчёт и прочее ----------
 function report(){
 const d=S.debt,pdx=d.paid.reduce((a,b)=>a+b.s,0);
-let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`;
+let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`+monthReport();
 if(S.shift)r+=`График 2/2: сегодня ${isShift(today())?'смена':'выходной'}\n`;
 const G=mainG();
 r+=G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
 r+='Направления:\n'+DIRS.map(d=>`- ${d[2]}: ${dirMetric(d[0]).replace(/<[^>]+>/g,'')}`).join('\n')+'\n';
 r+=`Копилка за 30 дней: ${piggy(30).length}\n`;
-const OG=S.goals.filter(g=>!g.arch&&!g.priv&&g!==G&&(g.type=='main'||g.type=='streak'));
-if(OG.length)r+='Другие цели:\n'+OG.map(g=>g.type=='streak'?`- ${g.t}: серия ${sCur(g)} из ${g.n}${sRuns(g).done?', выполнено':''}`:`- ${g.t}: ${gPct(g)}%${g.done?', выполнено':''}`).join('\n')+'\n';
+const OG=S.goals.filter(g=>!g.arch&&!g.priv&&g!==G&&(g.type=='main'||g.type=='streak'||g.type=='num'));
+if(OG.length)r+='Другие цели:\n'+OG.map(g=>g.type=='num'?`- ${g.t}: старт ${g.from??'—'}, сейчас ${lastW()??'—'} кг, срок ${g.due||'—'}${numDone(g)?', выполнено':''}`:g.type=='streak'?`- ${g.t}: серия ${sCur(g)} из ${g.n}${sRuns(g).done?', выполнено':''}`:`- ${g.t}: ${gPct(g)}%${g.done?', выполнено':''}`).join('\n')+'\n';
 if(S.tasks.length)r+=`Задачи: открыто ${S.tasks.filter(x=>x.k!='note'&&!x.done).length}, сделано за 7 дней ${S.tasks.filter(x=>x.done&&x.done>=ago(6)).length}\n`;
 r+='Привычки за последние 7 дней:\n';
 S.habits.forEach(x=>{let k=0;for(let i=0;i<7;i++)if(logged(ago(i),x.id))k++;r+=`- ${x.n}: ${k} из 7\n`});
@@ -1285,6 +1358,9 @@ case 'gadd':addGoalSheet();return;
 case 'gnew1':mainSheet(-1);return;
 case 'gnew2':streakSheet(null);return;
 case 'gsedit':streakSheet(D.id);return;
+case 'gnew3':wgoalSheet(null);return;
+case 'gnedit':wgoalSheet(D.id);return;
+case 'mtedit':mtSheet();return;
 case 'tkall':tasksSheet();return;
 case 'tkedit':taskSheet(D.id,D.k,D.d);return;
 case 'tkd':$('f_kd').value=D.v;b.parentNode.querySelectorAll('button').forEach(q=>q.classList.toggle('on',q==b));return;
