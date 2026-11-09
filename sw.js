@@ -1,6 +1,6 @@
 // Офлайн-режим: сначала сеть (чтобы обновления приходили), без сети — сохранённая копия.
-const C = 'kurs-v14';
-const FILES = ['./', './index.html', './cloud.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+const C = 'kurs-v15';
+const FILES = ['./', './index.html', './path.js', './cloud.js', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(FILES)));

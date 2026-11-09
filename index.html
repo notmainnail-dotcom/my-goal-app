@@ -75,6 +75,33 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .tkn{display:block;width:100%;padding:9px 0;border-top:1px solid var(--bd)}
 .tkh{margin:16px 0 2px}
 .tke{padding:4px 0 2px}
+.pr{margin:4px 2px 16px}
+.pr>small{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--mu)}
+.pr h1{font-size:34px;font-weight:900;letter-spacing:-1.4px;text-transform:uppercase;line-height:1;margin:6px 0 14px}
+.pc{display:flex;gap:10px}
+.pc>div{flex:1;min-width:0;border-radius:18px;padding:12px;background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh)}
+.pc>div.me2{border:2px solid var(--tx)}
+.pc small{font-size:10px;font-weight:800;letter-spacing:1px}
+.pers{position:relative;width:46px;height:44px;margin:10px auto 6px}
+.pers i{position:absolute;left:14px;top:0;width:18px;height:18px;border-radius:50%;background:var(--pcl)}
+.pers b{position:absolute;left:4px;top:21px;width:38px;height:22px;border-radius:19px 19px 6px 6px;background:var(--pcl)}
+.pc .lbl{font-weight:700;font-size:15px;margin-bottom:6px;text-align:center}
+.pc ul{list-style:none;padding:0;margin:0;font-size:12.5px;line-height:1.5;color:var(--mu)}
+.segs{display:flex;gap:4px;margin:14px 0 8px}
+.segs i{flex:1;height:8px;border-radius:4px;background:var(--soft);overflow:hidden;position:relative;font-style:normal}
+.segs i b{position:absolute;left:0;top:0;bottom:0;background:var(--sc);border-radius:4px}
+.pnum{display:flex;justify-content:space-between;align-items:baseline}
+.pnum b{font-size:32px;font-weight:900;letter-spacing:-1px}
+.up{color:var(--ok);font-weight:800;font-size:14px}
+.why2{display:block;margin-top:8px;font-style:italic;color:var(--mu);font-size:14px;line-height:1.4}
+.trk .th2{display:flex;align-items:center;gap:10px}
+.trk .pct{font-size:22px;font-weight:900}
+.trk .segs{margin:10px 0 8px}
+.trk .mu .late{color:var(--wr);font-weight:700}
+.ladder{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ladder span{font-size:12px;font-weight:800;padding:4px 9px;border-radius:99px;background:var(--soft);color:var(--mu)}
+.ladder span.on{background:#f97316;color:#fff}
+.st.nx.pv b{border-color:var(--c);color:var(--c);font-size:13px}
 .why p{margin:4px 0 0;font-size:16px;font-style:italic;line-height:1.45}
 .ht small.dm{color:var(--ac);font-weight:700;margin-top:2px}
 .big2{font-size:26px;font-weight:800;color:var(--ok)}
@@ -239,6 +266,7 @@ nav button.on{color:var(--ac);background:rgba(99,102,241,.13)}
 <div id="stop"></div>
 <div id="rest"></div>
 <div id="toast"></div>
+<script src="path.js"></script>
 <script src="cloud.js"></script>
 <script>
 const K='life_v1';
@@ -377,6 +405,8 @@ if(!o.goals.some(g=>g.star)){const m=o.goals.find(g=>g.type=='main'&&!g.done&&!g
 if(!o.plan.s14){o.plan.s14=1;if(!o.goals.some(g=>g.id=='gs14')){const h=o.habits.find(x=>/получил/i.test(x.n))||o.habits.find(x=>/успех/i.test(x.n));
 const src=h?h.id:'',ok=d=>!!(src&&o.logs[d]&&o.logs[d][src]);let d=ok(today())?today():ago(1),st=today();while(ok(d)){st=d;d=add(d,-1)}
 o.goals.push({id:'gs14',type:'streak',t:'14 дней подряд: «'+(h?h.n:'Получилось')+'»',src,n:14,start:st,priv:true})}}
+// 9.11.2026: появился путь к 1 мая (path.js, ведёт Claude) — ноябрьские цели уходят в архив, их заменяют полоски пути
+if(window.PATH&&!o.plan.path1){o.plan.path1=1;o.plan.nov=1;o.goals.forEach(g=>{if(['gm1','gen1','gw65','gs14'].includes(g.id))g.arch=1})}
 // 1.11.2026: план ноября, согласованный с ним — сети до L3VPN, вес 65 кг, английский рассказ, цифры плана месяца (один раз)
 if(!o.plan.nov){o.plan.nov=1;o.plan.mt=o.plan.mt||{en:24,net:24,gym:12,food:20,weigh:4};
 const m=o.goals.find(g=>g.id=='gm1');if(m&&!m.arch){m.t='Сети: OSPF/IS-IS → MPLS → L2VPN и L3VPN';
@@ -588,7 +618,9 @@ const L=S.logs[key]||{},c=(L[x.id]||{}).lvl||0,wd=x.w&&weekDone(x.id,key),on=c||
 let sub=c?'Отмечено в '+L[x.id].t:x.w?(wd?'На этой неделе уже сделано':'Раз в неделю'):'Каждый день';
 if(!c&&x.a&&isShift(key)===false)sub='Выходной: хватит минимума, '+esc(x.L[0]);
 let w='';for(let i=6;i>=0;i--){const d=add(key,-i);w+=`<i class="${logged(d,x.id)?'on':''} ${i?'':'td'}">${WD[pd(d).getDay()]}</i>`}
-let nx='';S.goals.forEach((g,gi)=>{if(g.arch||g.done)return;const hid=g.type=='main'?areaHab(g.area):g.type=='steps'?g.h:null;if(!hid||hid!=x.id)return;
+let nx='';if(PT())PATH.tracks.forEach(tr=>{if(!tr.steps||tr.hab!=x.id)return;const c=trProg(tr,key).cur;if(!c)return;
+nx+=`<button class="st nx pv" data-a="ptrack" data-k="${tr.id}"><b>➜</b><span><small>Путь · ${esc(tr.n)} · засчитывает Claude</small>${esc(c.t)}<small class="due ${c.due<today()?'late':''}">${c.due<today()?'срок прошёл, жду итог':dueTxt(c.due)}</small></span></button>`});
+S.goals.forEach((g,gi)=>{if(g.arch||g.done)return;const hid=g.type=='main'?areaHab(g.area):g.type=='steps'?g.h:null;if(!hid||hid!=x.id)return;
 const si=g.steps.findIndex(s=>!s.done);if(si<0)return;const s=g.steps[si];
 nx+=`<button class="st nx" data-a="stp" data-g="${gi}" data-s="${si}"><b></b><span><small>${g.type=='main'?(g===mainG()?'Главная цель':'Цель')+' · ступенька '+(si+1)+' из '+g.steps.length:'Следующий шаг'}</small>${esc(s.x)}${s.due?`<small class="due ${s.due<today()?'late':''}">${dueTxt(s.due)}</small>`:''}</span></button>`});
 return `<div class="hab ${on?'done':''}" style="${hs(x)}"><div class="hrow" data-a="hcal" data-h="${esc(x.id)}"><div class="ico">${esc(x.ic)}</div><div class="ht"><b>${esc(x.n)}${x.a?'<span class="tag">якорь</span>':''}</b><small>${sub}</small></div><div class="ok">${on?'✓':''}</div></div>`+
@@ -629,8 +661,12 @@ function vToday(){
 const t=today(),key=fkey(),n=dayN(),anc=S.habits.filter(h=>h.a),T=S.logs[t]||{},Y=S.logs[ago(1)]||{};
 const dl=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 let h=head(dl,'Сегодня');
-const G=mainG(),gs=G?G.steps[curStep(G)]:null;
-h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
+const G=mainG(),gs=G?G.steps[curStep(G)]:null,PP=PT();
+if(PP){const v=pathAll(t),nt=PP.tracks.find(x=>x.id=='net'),c=nt&&trProg(nt,t).cur,F=freeStreaks(),ft=PP.tracks.find(x=>x.kind=='days'),nx=ft&&ft.ladder.find(n=>n>F.cur);
+h+=`<div class="hero" data-a="tab" data-t="goals">${ring(P100(v),86,9,'#fff','rgba(255,255,255,.25)',20)}<div class="info"><b>Путь к ${fmtD(PP.end)}: ${P100(v)}%</b>`+
+`<p>${c?'Сейчас: '+esc(c.t)+' · '+(c.due<t?'жду итог':dueTxt(c.due)):'Сети: все главы засчитаны'}</p>`+
+(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+(nx?`<span class="chip">🔥 ${F.cur} из ${nx}</span>`:'')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`}
+else h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
 `<p>${G?(gs?'Сейчас: '+esc(gs.x)+(gs.due?' · '+dueTxt(gs.due):''):''):'Выбери её во вкладке «Цели»'}</p>`+
 (anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+S.goals.filter(g=>g.type=='streak'&&!g.arch&&!sRuns(g).done).map(g=>`<span class="chip">🔥 ${sCur(g)} из ${g.n}</span>`).join('')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
 if(n>30)h+=`<button class="note in" data-a="tab" data-t="more">🏁 30 дней прошли. Составь отчёт для Claude и начни новый месяц во вкладке «Ещё».</button>`;
@@ -814,7 +850,7 @@ return `${n} ${plural(n,'тренировка','тренировки','трен�
 const d=S.debt,pd=d.paid.reduce((x,y)=>x+y.s,0);return d.total?'Выплачено '+Math.min(100,Math.round(pd/d.total*100))+'%':'Сумма долгов не указана'}
 // копилка: всё сделанное само собирается из данных — ступеньки, тренировки, рекорды, выплаты, «что получилось»
 function piggy(days){const a=days?ago(days-1):'0000',L=[];
-S.goals.forEach(g=>{if(g.type!='main')return;g.steps.forEach(s=>{if(s.done&&s.done.slice(0,10)>=a)L.push([s.done.slice(0,10),'🎯','Ступенька: '+s.x])});
+S.goals.forEach(g=>{if(g.type!='main'||g.arch)return;g.steps.forEach(s=>{if(s.done&&s.done.slice(0,10)>=a)L.push([s.done.slice(0,10),'🎯','Ступенька: '+s.x])});
 if(g.done&&g.done>=a)L.push([g.done,'🏆','Цель выполнена: '+g.t])});
 wl().forEach(w=>{if(!w.done||w.d<a)return;const me=(w.p||'me')=='me';L.push([w.d,me?'🏋️':'🤝',me?'Тренировка: '+w.n:'Тренировал: '+profOf(w.p).n+', '+w.n]);
 if(me)w.items.forEach((it,ii)=>{const k=exKind(it);let best=null;it.sets.forEach((s,si)=>{if(s.ok&&isRec(w,ii,si)&&(!best||score(k,s)>score(k,best)))best=s});
@@ -824,6 +860,7 @@ for(const d in S.mood)if(d>=a&&S.mood[d].win)L.push([d,'✓',S.mood[d].win]);
 S.goals.forEach(g=>{if(g.type!='streak'||g.arch)return;const d=sRuns(g).done;if(d&&d>=a)L.push([d,'🔥','Серия '+g.n+' дней: '+g.t])});
 S.goals.forEach(g=>{if(g.type!='num'||g.arch)return;const d=numDone(g);if(d&&d>=a)L.push([d,'🏆','Цель выполнена: '+g.t])});
 S.tasks.forEach(x=>{if(x.done&&x.done>=a)L.push([x.done,'✅','Задача: '+x.x])});
+if(PT()){PATH.tracks.forEach(tr=>(tr.steps||[]).forEach(x=>{if(x.ok&&x.ok>=a)L.push([x.ok,'🎯','Засчитано: '+x.t])}));const F=freeStreaks();for(const n in F.got)if(F.got[n]>=a)L.push([F.got[n],'🔥',n+' дней подряд «Получилось»'])}
 return L.sort((x,y)=>x[0]<y[0]?1:x[0]>y[0]?-1:0)}
 // сравнение только с собой: прошлые 30 дней → последние 30
 function cmpRows(){const t=today(),a=ago(29),b0=ago(59),b1=ago(30);
@@ -836,6 +873,49 @@ return R.filter(r=>r[1]||r[2])}
 
 const numDone=g=>(S.food.weight.find(x=>x.d>=g.start&&x.kg>=g.target)||{}).d||null;
 const gDoneAt=g=>g.type=='streak'?sRuns(g).done:g.type=='num'?numDone(g):g.done;
+// ---------- путь к 1 мая ----------
+// Ступеньки засчитывает Claude в path.js (ok). Текущая глава/ступенька наполняется днями занятий до 70%, остальное — после проверки.
+const PT=()=>window.PATH&&PATH.tracks?PATH:null;
+const freeHab=()=>{const g=S.goals.find(x=>x.id=='gs14');return(g&&g.src&&hab(g.src))||S.habits.find(h=>/получил/i.test(h.n))||S.habits.find(h=>/успех/i.test(h.n))};
+const trHab=tr=>tr.kind=='days'?freeHab():tr.hab?hab(tr.hab):null;
+function trProg(tr,d){const P=PATH;d=d||today();
+if(tr.kind=='body'){const W=S.food.weight.filter(x=>x.d<=d),w=W.length?W[W.length-1].kg:tr.w0,n=wp('me').filter(x=>x.done&&x.d>=P.start&&x.d<=d).length;
+return{v:(Math.max(0,Math.min(1,(w-tr.w0)/(tr.w1-tr.w0)))+Math.min(1,n/tr.tr))/2,w,n}}
+if(tr.kind=='days'){const h=freeHab(),n=h?cntH(h.id,P.start,d):0;return{v:Math.min(1,n/tr.target),n}}
+const done=x=>x.ok&&x.ok<=d,cnt=tr.steps.filter(done).length,ch=tr.steps.filter(x=>x.k!='ev'),cur=ch.find(x=>!done(x));let part=0;
+if(cur){const prev=ch.slice(0,ch.indexOf(cur)).filter(done).map(x=>x.ok).sort().pop(),from=prev&&prev>=P.start?add(prev,1):P.start,h=trHab(tr);
+part=Math.min(.7,(h&&from<=d?cntH(h.id,from,d):0)/(cur.days||6)*.7)}
+return{v:(cnt+(cur?part:0))/tr.steps.length,cur,part,cnt}}
+const pathAll=d=>{const P=PT();return P?avg(P.tracks.map(tr=>trProg(tr,d).v)):0};
+// серии «Получилось»: текущая и лучшая с начала пути; ступени лестницы с датой, когда взяты
+function freeStreaks(){const P=PT(),tr=P&&P.tracks.find(x=>x.kind=='days'),h=freeHab(),R={cur:0,best:0,got:{}};if(!h||!tr)return R;
+let run=0;for(let x=add(P.start,-60);x<=today();x=add(x,1)){if(logged(x,h.id)){run++;if(x>=P.start){R.best=Math.max(R.best,run);tr.ladder.forEach(n=>{if(run>=n&&!R.got[n])R.got[n]=x})}}else if(x<today())run=0}
+let y=logged(today(),h.id)?today():ago(1);while(logged(y,h.id)){R.cur++;y=add(y,-1)}return R}
+const segBar=(n,fill,col)=>`<div class="segs" style="--sc:${col}">`+Array.from({length:n},(_,i)=>`<i><b style="width:${Math.max(0,Math.min(1,fill-i))*100}%"></b></i>`).join('')+'</div>';
+const P100=v=>Math.round(v*100);
+function primeCard(){const P=PT(),t=today(),v=pathAll(t),dv=P100(v)-P100(pathAll(ago(7)));
+const nowL=P.tracks.map(tr=>{const p=trProg(tr,t);return `<li>${tr.ic} ${tr.kind=='body'?fmt(p.w)+' кг':tr.kind=='days'?p.n+' дн.':p.cur?esc(p.cur.t.split(/[·:]/)[0].trim()):'готово'}</li>`}).join('');
+return `<div class="pr"><small>Ты · сейчас и ${fmtD(P.end)} ${P.end.slice(0,4)}</small><h1>Что тебя отделяет?</h1>`+
+`<div class="pc"><div><small class="mu">СЕГОДНЯ</small><div class="pers" style="--pcl:#9ca3af"><i></i><b></b></div><div class="lbl">Текущая точка</div><ul>${nowL}</ul></div>`+
+`<div class="me2"><small class="mu">ПРАЙМОВАЯ ВЕРСИЯ</small><div class="pers" style="--pcl:var(--tx)"><i></i><b></b></div><div class="lbl">Кем станешь</div><ul>${P.tracks.map(tr=>`<li>${tr.ic} ${esc(tr.prime)}</li>`).join('')}</ul></div></div>`+
+segBar(20,v*20,'var(--tx)')+`<div class="pnum"><b>${P100(v)}%</b><span class="${dv>0?'up':'mu'}">${dv>0?'▲ +'+dv+'% за неделю':'за неделю без изменений'}</span></div>`+
+`<button class="plain why2" data-a="gwhy">«${esc(S.plan.why||'Напиши, какой жизни хочешь')}»</button></div>`}
+function trackCard(tr){const t=today(),p=trProg(tr,t),dv=P100(p.v)-P100(trProg(tr,ago(7)).v);let bar,sub;
+if(tr.steps){const N=tr.steps.length;bar=segBar(N,p.cnt+(p.cur?p.part:0),tr.c);
+const c=p.cur;sub=c?`Сейчас: ${esc(c.t)} · <span class="${c.due<t?'late':''}">${c.due<t?'срок прошёл, жду итог':dueTxt(c.due)}</span>`:'Все ступеньки засчитаны 🏆'}
+else if(tr.kind=='body'){bar=segBar(12,p.v*12,tr.c);sub=`${fmt(p.w)} из ${fmt(tr.w1)} кг · ${p.n} из ${tr.tr} тренировок`}
+else{const S2=freeStreaks();bar=segBar(17,p.v*17,tr.c);sub=`${p.n} из ${tr.target} дней · серия ${S2.cur}`+`<div class="ladder">${tr.ladder.map(n=>`<span class="${S2.got[n]?'on':''}">🔥 ${n}</span>`).join('')}<span class="${p.n>=tr.target?'on':''}">🏆 ${tr.target}</span></div>`}
+return `<button class="card wcard trk" data-a="ptrack" data-k="${tr.id}"><div class="th2"><span style="font-size:22px">${tr.ic}</span><b style="flex:1">${esc(tr.n)}</b>${dv>0?`<span class="up">▲ ${dv}</span>`:''}<span class="pct">${P100(p.v)}%</span></div>${bar}<div class="mu">${sub}</div></button>`}
+function trackSheet(id){const P=PT(),tr=P.tracks.find(x=>x.id==id),t=today(),p=trProg(tr,t);let b='';
+if(tr.steps)b=tr.steps.map(x=>{const st=x.ok?'ok':x===p.cur?'cur':x.due<t?'late':'next';
+return `<div class="link"><span>${st=='ok'?'✅':st=='cur'?'▶️':x.k=='ev'?'📌':'○'} ${esc(x.t)}${st=='cur'?` <small class="mu">· по дням ${P100(p.part)}%</small>`:''}</span><b style="flex:none;${st=='late'||(st=='cur'&&x.due<t)?'color:var(--wr)':''}">${x.ok?'✓ '+fmtD(x.ok):fmtD(x.due)}</b></div>`}).join('');
+else if(tr.kind=='body')b=`<div class="link"><span>⚖️ Вес сейчас</span><b>${fmt(p.w)} из ${fmt(tr.w1)} кг</b></div><div class="link"><span>🏋️ Тренировок с ${fmtD(P.start)}</span><b>${p.n} из ${tr.tr}</b></div>`+
+tr.marks.map(m=>`<div class="link"><span>${p.w>=m[1]?'✅':'○'} ${fmt(m[1])} кг</span><b>к ${fmtD(m[0])}</b></div>`).join('');
+else{const S2=freeStreaks();b=`<div class="link"><span>Дней «Получилось» с ${fmtD(P.start)}</span><b>${p.n} из ${tr.target}</b></div><div class="link"><span>Серия сейчас</span><b>${S2.cur}</b></div><div class="link"><span>Лучшая серия</span><b>${S2.best}</b></div>`+
+tr.ladder.map(n=>`<div class="link"><span>${S2.got[n]?'🔥':'○'} ${n} дней подряд</span><b>${S2.got[n]?'взято '+fmtD(S2.got[n]):''}</b></div>`).join('')}
+openSheet(tr.ic+' '+tr.n+' · '+P100(p.v)+'%',`<div class="mu" style="margin-bottom:8px">${esc(tr.goal)}</div>${b}`+
+`<div class="hint">${tr.steps?'Ступеньки засчитывает Claude по твоему отчёту (по сетям — с итогом из «Обучения сетям»). Пока идёт ступенька, она наполняется днями занятий до 70%.':'Считается само по твоим отметкам.'} Файл пути от ${fmtD(P.v)}.</div>`,null,null)}
+
 function goalCard(g){const gi=S.goals.indexOf(g),t=today();
 if(g.type=='num'){const cur=lastW(),st=g.from||cur,dn=numDone(g),pc=cur&&g.target!=st?Math.max(0,Math.min(100,Math.round((cur-st)/(g.target-st)*100))):0,
 wk=g.due?Math.max(1,diff(t,g.due)/7):0,need=cur&&g.due&&!dn?(g.target-cur)/wk:0;
@@ -847,9 +927,10 @@ return `<div class="card"><div class="gh">${ring(gPct(g),54,6,'#6366f1','var(--s
 g.steps.map((x,i)=>{const late=!x.done&&x.due&&x.due<t;return `<button class="st ${x.done?'d':''}" data-a="stp" data-g="${gi}" data-s="${i}"><b>${x.done?'✓':''}</b><span>${esc(x.x)}<small class="${x.done?'':'due'+(late?' late':'')}">${x.done?'сделано '+fmtD(x.done.slice(0,10)):x.due?dueTxt(x.due):''}</small></span></button>`+
 (late?`<button class="btn g" data-a="gshift" data-g="${gi}" data-s="${i}" style="margin:0 0 8px">Сдвинуть и уменьшить</button>`:'')}).join('')+'</div>'}
 
-function vGoals(){const t=today(),G=mainG();
+function vGoals(){const t=today(),G=mainG(),P=PT();
 let h=head('Зачем, куда и что уже сделано','Цели');
-h+=`<button class="card wcard why" data-a="gwhy"><small class="mu">ЗАЧЕМ</small><p>${esc(S.plan.why||'Напиши, какой жизни хочешь, своими словами.')}</p></button>`;
+if(P){h+=primeCard()+P.tracks.map(trackCard).join('');if(G)h+='<h2>Главная цель</h2>'+goalCard(G)}
+else{h+=`<button class="card wcard why" data-a="gwhy"><small class="mu">ЗАЧЕМ</small><p>${esc(S.plan.why||'Напиши, какой жизни хочешь, своими словами.')}</p></button>`;
 h+='<h2>Главная цель</h2>';
 if(G){const gi=S.goals.indexOf(G),fin=G.steps.filter(s=>s.due).map(s=>s.due).sort().pop();
 h+=`<div class="hero g4">${ring(gPct(G),78,8,'#fff','rgba(255,255,255,.25)',18)}<div class="info"><b>${esc(G.t)}</b><p>${fin?'Финиш: '+fmtD(fin):''}${G.wit?' · знает: '+esc(G.wit):''}</p></div></div>`;
@@ -859,17 +940,17 @@ return `<button class="st ${s.done?'d':''}" data-a="stp" data-g="${gi}" data-s="
 h+=`<div class="row2"><button class="btn" data-a="gshare">📣 Отправить</button><button class="btn g" data-a="gedit" data-g="${gi}">✎ Изменить</button></div>`;
 if(!G.wit)h+='<div class="mu" style="padding:0 4px 4px">Свидетель — живой человек, который знает о цели. С ним держаться легче: укажи его в «Изменить» и отправь план.</div>'}
 else{const D=S.goals.filter(g=>g.type=='main'&&g.done&&!g.arch).sort((x,y)=>x.done<y.done?-1:1).pop();
-h+=`<div class="card">${D?`<b>🏆 Выполнено: ${esc(D.t)}</b><div class="mu" style="margin-top:4px">${fmtD(D.done)}. Пора выбрать следующую.</div>`:'<div class="mu">Одна цель, которую можно проверить: срок и 2–5 ступенек, каждая не дольше недели.</div>'}</div><button class="btn" data-a="gedit" data-g="-1">＋ Главная цель</button>`}
+h+=`<div class="card">${D?`<b>🏆 Выполнено: ${esc(D.t)}</b><div class="mu" style="margin-top:4px">${fmtD(D.done)}. Пора выбрать следующую.</div>`:'<div class="mu">Одна цель, которую можно проверить: срок и 2–5 ступенек, каждая не дольше недели.</div>'}</div><button class="btn" data-a="gedit" data-g="-1">＋ Главная цель</button>`}}
 const OG=S.goals.filter(g=>!g.arch&&g!==G&&(g.type=='main'||g.type=='streak'||g.type=='num')),act=OG.filter(g=>!gDoneAt(g)),fin=OG.filter(g=>!act.includes(g));
 h+=monthCard();
 h+='<h2>Мои цели</h2>'+act.map(goalCard).join('')+'<button class="btn g" data-a="gadd">＋ Добавить цель</button>';
 if(fin.length)h+='<div class="card">'+fin.map(g=>`<button class="li plain" style="width:100%" data-a="${{streak:'gsedit',num:'gnedit'}[g.type]||'gedit'}" data-id="${g.id}" data-g="${S.goals.indexOf(g)}"><div class="ht"><b>🏆 ${esc(g.t)}</b><small>выполнено ${fmtD(gDoneAt(g))}</small></div></button>`).join('')+'</div>';
-h+='<h2>Направления</h2><div class="card">'+DIRS.map(d=>`<button class="li plain" style="width:100%" data-a="gdir" data-k="${d[0]}"><div class="ico" style="--ct:var(--soft)">${d[1]}</div><div class="ht"><b>${d[2]}${G&&G.area==d[0]?'<span class="tag">главная</span>':''}</b><small>${esc((S.plan.dirs||{})[d[0]]||'')}</small><small class="dm">${dirMetric(d[0])}</small></div></button>`).join('')+'</div>';
+if(!P)h+='<h2>Направления</h2><div class="card">'+DIRS.map(d=>`<button class="li plain" style="width:100%" data-a="gdir" data-k="${d[0]}"><div class="ico" style="--ct:var(--soft)">${d[1]}</div><div class="ht"><b>${d[2]}${G&&G.area==d[0]?'<span class="tag">главная</span>':''}</b><small>${esc((S.plan.dirs||{})[d[0]]||'')}</small><small class="dm">${dirMetric(d[0])}</small></div></button>`).join('')+'</div>';
 const C=cmpRows();
 if(C.length)h+='<h2>Месяц назад → сейчас</h2><div class="card"><div class="mu" style="margin-bottom:4px">Прошлые 30 дней → последние 30. Сравнение только с собой.</div>'+C.map(r=>`<div class="link"><span>${r[0]}</span><b>${fmt(r[1])} → <span style="color:${r[2]>r[1]?'var(--ok)':'inherit'}">${fmt(r[2])}</span></b></div>`).join('')+'</div>';
-const P=piggy(30);
-h+=`<h2>Копилка</h2><div class="card"><div class="exh"><b style="flex:1">Засчитано за 30 дней</b><span class="big2">${P.length}</span></div>`+
-(P.length?(pigAll?P:P.slice(0,10)).map(x=>`<div class="link"><span>${x[1]} ${esc(x[2])}</span><small class="mu" style="flex:none">${fmtD(x[0])}</small></div>`).join('')+(P.length>10?`<button class="btn g" data-a="gall" style="margin:10px 0 0">${pigAll?'Свернуть':'Показать всё ('+P.length+')'}</button>`:'')
+const PG=piggy(30);
+h+=`<h2>Копилка</h2><div class="card"><div class="exh"><b style="flex:1">Засчитано за 30 дней</b><span class="big2">${PG.length}</span></div>`+
+(PG.length?(pigAll?PG:PG.slice(0,10)).map(x=>`<div class="link"><span>${x[1]} ${esc(x[2])}</span><small class="mu" style="flex:none">${fmtD(x[0])}</small></div>`).join('')+(PG.length>10?`<button class="btn g" data-a="gall" style="margin:10px 0 0">${pigAll?'Свернуть':'Показать всё ('+PG.length+')'}</button>`:'')
 :'<div class="mu" style="margin-top:6px">Сюда сами падают пройденные ступеньки, тренировки, рекорды, выплаты и то, что получилось за день.</div>')+'</div>';
 const A=S.goals.filter(g=>g.arch);if(A.length)h+=`<button class="btn g" data-a="garch">Старые цели (${A.length})</button>`;
 return h}
@@ -1006,7 +1087,8 @@ return R.map(r=>r.concat(r[1]>=r[2]?'ok':r[1]+left>=r[2]?'go':'no'))}
 // самый длинный пропуск якорей учёбы (английский и сети), сегодня не считается, пока день не кончился
 function maxMiss(a,b){const A=['en','net'].filter(hab).length?['en','net'].filter(hab):S.habits.filter(h=>h.a).map(h=>h.id);if(!A.length)return 0;
 let m=0,run=0;for(let d=a;d<=b&&d<today();d=add(d,1)){if(A.some(id=>logged(d,id)))run=0;else{run++;if(run>m)m=run}}return m}
-function stepRows(a,b){const L=[];S.goals.forEach(g=>{if(g.arch||g.priv||g.type!='main')return;g.steps.forEach(x=>{if(!x.due||x.due<a||x.due>b)return;
+function stepRows(a,b){const L=[],P=PT();
+if(P)P.tracks.forEach(tr=>(tr.steps||[]).forEach(x=>{if(x.due<a||x.due>b)return;L.push([tr.n,x.t,x.due,x.ok?(x.ok<=x.due?'ok':'late'):x.due<today()?'no':'go'])}));S.goals.forEach(g=>{if(g.arch||g.priv||g.type!='main')return;g.steps.forEach(x=>{if(!x.due||x.due<a||x.due>b)return;
 L.push([g.t,x.x,x.due,x.done?(x.done.slice(0,10)<=x.due?'ok':'late'):x.due<today()?'no':'go'])})});return L.sort((x,y)=>x[2]<y[2]?-1:1)}
 function monthTotals(a,b){const W=wp('me').filter(w=>w.done&&w.d>=a&&w.d<=b);let ton=0,rec=0;
 W.forEach(w=>{ton+=wStats(w).ton;w.items.forEach((it,ii)=>{if(it.sets.some((x,si)=>x.ok&&isRec(w,ii,si)))rec++})});
@@ -1295,10 +1377,16 @@ openSheet('Красная кнопка',`<label class="lb">Зачем я мен�
 // ---------- отчёт и прочее ----------
 function report(){
 const d=S.debt,pdx=d.paid.reduce((a,b)=>a+b.s,0);
-let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`+monthReport();
+let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`;
+if(PT()){const t=today(),v=pathAll(t);r+=`ПУТЬ К ${PATH.end} (файл пути от ${PATH.v}): ${P100(v)}% (за неделю ${P100(v)-P100(pathAll(ago(7)))>=0?'+':''}${P100(v)-P100(pathAll(ago(7)))}%)\n`;
+PATH.tracks.forEach(tr=>{const p=trProg(tr,t);if(tr.priv){r+=`- ${tr.n}: ${P100(p.v)}%\n`;return}
+if(tr.kind=='body'){r+=`- ${tr.n}: ${P100(p.v)}% · вес ${p.w} из ${tr.w1} кг · тренировок ${p.n} из ${tr.tr}\n`;return}
+r+=`- ${tr.n}: ${P100(p.v)}% · засчитано ${p.cnt} из ${tr.steps.length}`+(p.cur?` · сейчас «${p.cur.t}», срок ${p.cur.due}${p.cur.due<t?' (прошёл)':''}, по дням ${P100(p.part)}%`:'')+'\n'});
+const W=[];PATH.tracks.forEach(tr=>(tr.steps||[]).forEach(x=>{if(!x.ok&&x.due<t)W.push(x.t+' ('+x.due+')')}));if(W.length)r+=`Ждут проверки Claude (срок прошёл): ${W.join('; ')}\n`}
+r+=monthReport();
 if(S.shift)r+=`График 2/2: сегодня ${isShift(today())?'смена':'выходной'}\n`;
 const G=mainG();
-r+=G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
+r+=PT()&&!G?'':G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
 r+='Направления:\n'+DIRS.map(d=>`- ${d[2]}: ${dirMetric(d[0]).replace(/<[^>]+>/g,'')}`).join('\n')+'\n';
 r+=`Копилка за 30 дней: ${piggy(30).length}\n`;
 const OG=S.goals.filter(g=>!g.arch&&!g.priv&&g!==G&&(g.type=='main'||g.type=='streak'||g.type=='num'));
@@ -1354,6 +1442,7 @@ case 'stp':{const g=S.goals[D.g],s=g.steps[D.s];s.done=s.done?null:nowS();
 if(g.type=='main'){const all=g.steps.every(x=>x.done);g.done=all?today():null;if(all){toast('🏆 Цель выполнена!');break}}
 if(s.done)toast('Ступенька засчитана ✓');break}
 case 'gedit':mainSheet(+D.g);return;
+case 'ptrack':trackSheet(D.k);return;
 case 'gadd':addGoalSheet();return;
 case 'gnew1':mainSheet(-1);return;
 case 'gnew2':streakSheet(null);return;
