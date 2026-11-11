@@ -885,13 +885,15 @@ if(tr.kind=='days'){const h=freeHab(),n=h?cntH(h.id,P.start,d):0;return{v:Math.m
 const done=x=>x.ok&&x.ok<=d,cnt=tr.steps.filter(done).length,ch=tr.steps.filter(x=>x.k!='ev'),cur=ch.find(x=>!done(x));let part=0;
 if(cur){const prev=ch.slice(0,ch.indexOf(cur)).filter(done).map(x=>x.ok).sort().pop(),from=prev&&prev>=P.start?add(prev,1):P.start,h=trHab(tr);
 part=Math.min(.7,(h&&from<=d?cntH(h.id,from,d):0)/(cur.days||6)*.7)}
-return{v:(cnt+(cur?part:0))/tr.steps.length,cur,part,cnt}}
+// вес ступеньки: глава 1, сессия повторения 0,5
+const wt=x=>x.w||(x.rep?.5:1),all=tr.steps.reduce((a,x)=>a+wt(x),0),got=tr.steps.filter(done).reduce((a,x)=>a+wt(x),0);
+return{v:(got+(cur?part*wt(cur):0))/all,cur,part,cnt}}
 const pathAll=d=>{const P=PT();return P?avg(P.tracks.map(tr=>trProg(tr,d).v)):0};
 // серии «Получилось»: текущая и лучшая с начала пути; ступени лестницы с датой, когда взяты
 function freeStreaks(){const P=PT(),tr=P&&P.tracks.find(x=>x.kind=='days'),h=freeHab(),R={cur:0,best:0,got:{}};if(!h||!tr)return R;
 let run=0;for(let x=add(P.start,-60);x<=today();x=add(x,1)){if(logged(x,h.id)){run++;if(x>=P.start){R.best=Math.max(R.best,run);tr.ladder.forEach(n=>{if(run>=n&&!R.got[n])R.got[n]=x})}}else if(x<today())run=0}
 let y=logged(today(),h.id)?today():ago(1);while(logged(y,h.id)){R.cur++;y=add(y,-1)}return R}
-const segBar=(n,fill,col)=>`<div class="segs" style="--sc:${col}">`+Array.from({length:n},(_,i)=>`<i><b style="width:${Math.max(0,Math.min(1,fill-i))*100}%"></b></i>`).join('')+'</div>';
+const segBar=(n,fill,col)=>`<div class="segs" style="--sc:${col};gap:${n>24?2:4}px">`+Array.from({length:n},(_,i)=>`<i><b style="width:${Math.max(0,Math.min(1,fill-i))*100}%"></b></i>`).join('')+'</div>';
 const P100=v=>Math.round(v*100);
 function primeCard(){const P=PT(),t=today(),v=pathAll(t),dv=P100(v)-P100(pathAll(ago(7)));
 const nowL=P.tracks.map(tr=>{const p=trProg(tr,t);return `<li>${tr.ic} ${tr.kind=='body'?fmt(p.w)+' кг':tr.kind=='days'?p.n+' дн.':p.cur?esc(p.cur.t.split(/[·:]/)[0].trim()):'готово'}</li>`}).join('');
@@ -901,14 +903,14 @@ return `<div class="pr"><small>Ты · сейчас и ${fmtD(P.end)} ${P.end.sl
 segBar(20,v*20,'var(--tx)')+`<div class="pnum"><b>${P100(v)}%</b><span class="${dv>0?'up':'mu'}">${dv>0?'▲ +'+dv+'% за неделю':'за неделю без изменений'}</span></div>`+
 `<button class="plain why2" data-a="gwhy">«${esc(S.plan.why||'Напиши, какой жизни хочешь')}»</button></div>`}
 function trackCard(tr){const t=today(),p=trProg(tr,t),dv=P100(p.v)-P100(trProg(tr,ago(7)).v);let bar,sub;
-if(tr.steps){const N=tr.steps.length;bar=segBar(N,p.cnt+(p.cur?p.part:0),tr.c);
+if(tr.steps){const N=tr.steps.length;bar=segBar(N,p.v*N,tr.c);
 const c=p.cur;sub=c?`Сейчас: ${esc(c.t)} · <span class="${c.due<t?'late':''}">${c.due<t?'срок прошёл, жду итог':dueTxt(c.due)}</span>`:'Все ступеньки засчитаны 🏆'}
 else if(tr.kind=='body'){bar=segBar(12,p.v*12,tr.c);sub=`${fmt(p.w)} из ${fmt(tr.w1)} кг · ${p.n} из ${tr.tr} тренировок`}
 else{const S2=freeStreaks();bar=segBar(17,p.v*17,tr.c);sub=`${p.n} из ${tr.target} дней · серия ${S2.cur}`+`<div class="ladder">${tr.ladder.map(n=>`<span class="${S2.got[n]?'on':''}">🔥 ${n}</span>`).join('')}<span class="${p.n>=tr.target?'on':''}">🏆 ${tr.target}</span></div>`}
 return `<button class="card wcard trk" data-a="ptrack" data-k="${tr.id}"><div class="th2"><span style="font-size:22px">${tr.ic}</span><b style="flex:1">${esc(tr.n)}</b>${dv>0?`<span class="up">▲ ${dv}</span>`:''}<span class="pct">${P100(p.v)}%</span></div>${bar}<div class="mu">${sub}</div></button>`}
 function trackSheet(id){const P=PT(),tr=P.tracks.find(x=>x.id==id),t=today(),p=trProg(tr,t);let b='';
 if(tr.steps)b=tr.steps.map(x=>{const st=x.ok?'ok':x===p.cur?'cur':x.due<t?'late':'next';
-return `<div class="link"><span>${st=='ok'?'✅':st=='cur'?'▶️':x.k=='ev'?'📌':'○'} ${esc(x.t)}${st=='cur'?` <small class="mu">· по дням ${P100(p.part)}%</small>`:''}</span><b style="flex:none;${st=='late'||(st=='cur'&&x.due<t)?'color:var(--wr)':''}">${x.ok?'✓ '+fmtD(x.ok):fmtD(x.due)}</b></div>`}).join('');
+return `<div class="link"><span>${st=='ok'?'✅':st=='cur'?'▶️':x.rep?'🔁':x.k=='ev'?'📌':'○'} ${esc(x.t)}${st=='cur'?` <small class="mu">· по дням ${P100(p.part)}%</small>`:''}</span><b style="flex:none;${st=='late'||(st=='cur'&&x.due<t)?'color:var(--wr)':''}">${x.ok?'✓ '+fmtD(x.ok):fmtD(x.due)}</b></div>`}).join('');
 else if(tr.kind=='body')b=`<div class="link"><span>⚖️ Вес сейчас</span><b>${fmt(p.w)} из ${fmt(tr.w1)} кг</b></div><div class="link"><span>🏋️ Тренировок с ${fmtD(P.start)}</span><b>${p.n} из ${tr.tr}</b></div>`+
 tr.marks.map(m=>`<div class="link"><span>${p.w>=m[1]?'✅':'○'} ${fmt(m[1])} кг</span><b>к ${fmtD(m[0])}</b></div>`).join('');
 else{const S2=freeStreaks();b=`<div class="link"><span>Дней «Получилось» с ${fmtD(P.start)}</span><b>${p.n} из ${tr.target}</b></div><div class="link"><span>Серия сейчас</span><b>${S2.cur}</b></div><div class="link"><span>Лучшая серия</span><b>${S2.best}</b></div>`+
