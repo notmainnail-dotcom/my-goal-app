@@ -453,7 +453,7 @@ return R}
 // обратно из строк в S; то, что живёт только на устройстве, берём из loc
 function fromRows(R,loc){const c=R.cfg||{},f=R.food||{};
 const o={v:3,start:c.start||today(),shift:c.shift||null,moodNote:c.moodNote||null,shelf:c.shelf||[],debt:R.debt||{total:0,paid:[]},
-theme:loc.theme,bk:loc.bk,stop:loc.stop,plan:R.plan,logs:{},mood:{},
+theme:loc.theme,bk:loc.bk,stop:loc.stop,rs:loc.rs,plan:R.plan,logs:{},mood:{},
 food:{prof:f.prof||null,kcal:f.kcal||0,custom:f.custom||[],dishes:f.dishes||[],weight:f.weight||[],log:{}}};
 const list=p=>Object.keys(R).filter(k=>k.startsWith(p)).map(k=>R[k]).sort((a,b)=>a.o-b.o||(a.id<b.id?-1:1)).map(x=>{const y=Object.assign({},x);delete y.o;return y});
 o.habits=list('h:');o.goals=list('g:');o.tasks=list('k:');
@@ -669,6 +669,9 @@ h+=`<div class="hero" data-a="tab" data-t="goals">${ring(P100(v),86,9,'#fff','rg
 else h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
 `<p>${G?(gs?'Сейчас: '+esc(gs.x)+(gs.due?' · '+dueTxt(gs.due):''):''):'Выбери её во вкладке «Цели»'}</p>`+
 (anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+S.goals.filter(g=>g.type=='streak'&&!g.arch&&!sRuns(g).done).map(g=>`<span class="chip">🔥 ${sCur(g)} из ${g.n}</span>`).join('')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
+{const RS=S.rs||{},ws=weekStart(t),dw=pd(t).getDay(),pmn=(()=>{let[y,m]=t.split('-').map(Number);m--;if(!m){m=12;y--}return y+'-'+p(m)})();
+if((dw==0&&RS.w!=ws)||(dw==1&&RS.w!=add(ws,-7)))h+=`<button class="note in" data-a="repw">📮 ${dw==0?'Воскресенье: отправь Claude отчёт этой недели':'Отчёт прошлой недели ещё не отправлен'}. Нажми — текст скопируется.</button>`;
+if(+t.slice(8)<=3&&RS.m!=pmn)h+=`<button class="note in" data-a="repm">📮 Начало месяца: отправь Claude отчёт за ${MN[+pmn.slice(5)-1]}. Нажми — текст скопируется.</button>`}
 if(n>30)h+=`<button class="note in" data-a="tab" data-t="more">🏁 30 дней прошли. Составь отчёт для Claude и начни новый месяц во вкладке «Ещё».</button>`;
 if(n>1&&anc.length&&!anc.some(a=>Y[a.id]||T[a.id]))h+=`<div class="note wr">⚠️ Вчера был пропуск. Сегодня хватит минимума: ${anc.map(a=>esc(a.n)+' '+esc(a.L[0])).join(', ')}. Два пропуска подряд нельзя.</div>`;
 if(heavy()&&(!S.moodNote||diff(S.moodNote,t)>=7))h+=`<div class="note in">Последние две недели много тяжёлых дней. Это не слабость и не лень. Если так держится, можно поговорить с психологом или врачом, это нормальный шаг.<button class="btn g" data-a="mnote" style="margin:10px 0 0">Понял</button></div>`;
@@ -895,14 +898,14 @@ let run=0;for(let x=add(P.start,-60);x<=today();x=add(x,1)){if(logged(x,h.id)){r
 let y=logged(today(),h.id)?today():ago(1);while(logged(y,h.id)){R.cur++;y=add(y,-1)}return R}
 const segBar=(n,fill,col)=>`<div class="segs" style="--sc:${col};gap:${n>24?2:4}px">`+Array.from({length:n},(_,i)=>`<i><b style="width:${Math.max(0,Math.min(1,fill-i))*100}%"></b></i>`).join('')+'</div>';
 const P100=v=>Math.round(v*100);
-function primeCard(){const P=PT(),t=today(),v=pathAll(t),dv=P100(v)-P100(pathAll(ago(7)));
+function primeCard(){const P=PT(),t=today(),v=pathAll(t),ws=weekStart(t),dv=P100(v)-P100(pathAll(add(ws,-1)));
 const nowL=P.tracks.map(tr=>{const p=trProg(tr,t);return `<li>${tr.ic} ${tr.kind=='body'?fmt(p.w)+' кг':tr.kind=='days'?p.n+' дн.':p.cur?esc(p.cur.t.split(/[·:]/)[0].trim()):'готово'}</li>`}).join('');
 return `<div class="pr"><small>Ты · сейчас и ${fmtD(P.end)} ${P.end.slice(0,4)}</small><h1>Что тебя отделяет?</h1>`+
 `<div class="pc"><div><small class="mu">СЕГОДНЯ</small><div class="pers" style="--pcl:#9ca3af"><i></i><b></b></div><div class="lbl">Текущая точка</div><ul>${nowL}</ul></div>`+
 `<div class="me2"><small class="mu">ПРАЙМОВАЯ ВЕРСИЯ</small><div class="pers" style="--pcl:var(--tx)"><i></i><b></b></div><div class="lbl">Кем станешь</div><ul>${P.tracks.map(tr=>`<li>${tr.ic} ${esc(tr.prime)}</li>`).join('')}</ul></div></div>`+
-segBar(20,v*20,'var(--tx)')+`<div class="pnum"><b>${P100(v)}%</b><span class="${dv>0?'up':'mu'}">${dv>0?'▲ +'+dv+'% за неделю':'за неделю без изменений'}</span></div>`+
+segBar(20,v*20,'var(--tx)')+`<div class="pnum"><b>${P100(v)}%</b><span class="${dv>0?'up':'mu'}">${dv>0?'▲ +'+dv+'% на этой неделе':'на этой неделе пока без изменений'}<br><small>с пн, ${fmtD(ws)}</small></span></div>`+
 `<button class="plain why2" data-a="gwhy">«${esc(S.plan.why||'Напиши, какой жизни хочешь')}»</button></div>`}
-function trackCard(tr){const t=today(),p=trProg(tr,t),dv=P100(p.v)-P100(trProg(tr,ago(7)).v);let bar,sub;
+function trackCard(tr){const t=today(),p=trProg(tr,t),dv=P100(p.v)-P100(trProg(tr,add(weekStart(t),-1)).v);let bar,sub;
 if(tr.steps){const N=tr.steps.length;bar=segBar(N,p.v*N,tr.c);
 const c=p.cur;sub=c?`Сейчас: ${esc(c.t)} · <span class="${c.due<t?'late':''}">${c.due<t?'срок прошёл, жду итог':dueTxt(c.due)}</span>`:'Все ступеньки засчитаны 🏆'}
 else if(tr.kind=='body'){bar=segBar(12,p.v*12,tr.c);sub=`${fmt(p.w)} из ${fmt(tr.w1)} кг · ${p.n} из ${tr.tr} тренировок`}
@@ -984,7 +987,11 @@ if(S.shelf.length){h+='<div class="card">';S.shelf.forEach((x,i)=>{h+=`<div clas
 h+='<button class="btn g" data-a="ash">＋ Добавить на полку</button>';
 h+=`<h2>Синхронизация</h2><div id="syncSec">${syncSec()}</div>`;
 h+=`<h2>Отчёт и резервная копия</h2><div class="mu" style="margin:0 4px 10px">${S.bk?'Последняя копия: '+fmtD(S.bk)+'.':'Копия ещё не делалась.'} ${Cloud.user()?'Данные есть в облаке, текстовая копия — запасной вариант.':'Данные живут только в этом телефоне. Сохраняй копию в Заметки раз в неделю.'}</div>`+
-'<button class="btn" data-a="rep">Составить отчёт для Claude</button><button class="btn g" data-a="exp">Сделать резервную копию</button><button class="btn g" data-a="imp">Загрузить копию из текста</button>'+
+`<div class="mu" style="margin:0 4px 10px">Отчёт для Claude: каждое <b>воскресенье</b> — отчёт недели (пн–вс), <b>1-го числа</b> — отчёт месяца. Нажми — текст скопируется, вставь его в чат.</div>`+
+seg('rp',[['auto','Как обычно'],['cur','Текущий'],['prev','Прошлый']],'auto')+
+`<div class="row2"><button class="btn" data-a="repw" style="margin:0">📮 Отчёт недели</button><button class="btn" data-a="repm" style="margin:0">📮 Отчёт месяца</button></div>`+
+`<div class="hint" style="margin:6px 4px 14px">Как обычно: неделя ${rlab(...period('w','auto'))}, месяц ${rlab(...period('m','auto'))}.</div>`+
+'<button class="btn g" data-a="exp">Сделать резервную копию</button><button class="btn g" data-a="imp">Загрузить копию из текста</button>'+
 '<textarea class="in mono" id="io" rows="6" placeholder="Здесь появится текст. Он сразу копируется. Чтобы восстановить данные, вставь сюда копию и нажми «Загрузить»."></textarea>';
 h+=`<h2>Месяц</h2><div class="mu" style="margin:0 4px 10px">Сейчас: ${fmtD(S.start)} — ${fmtD(endD())}.</div><button class="btn g" data-a="newm">Начать новый месяц с сегодняшнего дня</button>`;
 h+='<h2>Оформление</h2><div class="seg">'+[['auto','Как в системе'],['light','Светлая'],['dark','Тёмная']].map(o=>`<button class="${S.theme==o[0]?'on':''}" data-a="theme" data-v="${o[0]}">${o[1]}</button>`).join('')+'</div>';
@@ -1377,42 +1384,61 @@ openSheet('Красная кнопка',`<label class="lb">Зачем я мен�
 ()=>{P.why=$('f_wy').value.trim();P.alts=$('f_alts').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,6);return true},null)}
 
 // ---------- отчёт и прочее ----------
-function report(){
-const d=S.debt,pdx=d.paid.reduce((a,b)=>a+b.s,0);
-let r=`Отчёт на ${nowS()}, день ${Math.min(dayN(),30)} из 30\n`;
-if(PT()){const t=today(),v=pathAll(t);r+=`ПУТЬ К ${PATH.end} (файл пути от ${PATH.v}): ${P100(v)}% (за неделю ${P100(v)-P100(pathAll(ago(7)))>=0?'+':''}${P100(v)-P100(pathAll(ago(7)))}%)\n`;
-PATH.tracks.forEach(tr=>{const p=trProg(tr,t);if(tr.priv){r+=`- ${tr.n}: ${P100(p.v)}%\n`;return}
-if(tr.kind=='body'){r+=`- ${tr.n}: ${P100(p.v)}% · вес ${p.w} из ${tr.w1} кг · тренировок ${p.n} из ${tr.tr}\n`;return}
-r+=`- ${tr.n}: ${P100(p.v)}% · засчитано ${p.cnt} из ${tr.steps.length}`+(p.cur?` · сейчас «${p.cur.t}», срок ${p.cur.due}${p.cur.due<t?' (прошёл)':''}, по дням ${P100(p.part)}%`:'')+'\n'});
-const W=[];PATH.tracks.forEach(tr=>(tr.steps||[]).forEach(x=>{if(!x.ok&&x.due<t)W.push(x.t+' ('+x.due+')')}));if(W.length)r+=`Ждут проверки Claude (срок прошёл): ${W.join('; ')}\n`}
-r+=monthReport();
-if(S.shift)r+=`График 2/2: сегодня ${isShift(today())?'смена':'выходной'}\n`;
-const G=mainG();
-r+=PT()&&!G?'':G?`Главная цель: ${G.t} — ${gPct(G)}%\n`+G.steps.map(s=>`- ${s.done?'✓':s.due&&s.due<today()?'⚠':'·'} ${s.x}${s.due?' (срок '+s.due+')':''}${s.done?', сделано '+s.done.slice(0,10):''}`).join('\n')+'\n':'Главная цель не выбрана\n';
-r+='Направления:\n'+DIRS.map(d=>`- ${d[2]}: ${dirMetric(d[0]).replace(/<[^>]+>/g,'')}`).join('\n')+'\n';
-r+=`Копилка за 30 дней: ${piggy(30).length}\n`;
-const OG=S.goals.filter(g=>!g.arch&&!g.priv&&g!==G&&(g.type=='main'||g.type=='streak'||g.type=='num'));
-if(OG.length)r+='Другие цели:\n'+OG.map(g=>g.type=='num'?`- ${g.t}: старт ${g.from??'—'}, сейчас ${lastW()??'—'} кг, срок ${g.due||'—'}${numDone(g)?', выполнено':''}`:g.type=='streak'?`- ${g.t}: серия ${sCur(g)} из ${g.n}${sRuns(g).done?', выполнено':''}`:`- ${g.t}: ${gPct(g)}%${g.done?', выполнено':''}`).join('\n')+'\n';
-if(S.tasks.length)r+=`Задачи: открыто ${S.tasks.filter(x=>x.k!='note'&&!x.done).length}, сделано за 7 дней ${S.tasks.filter(x=>x.done&&x.done>=ago(6)).length}\n`;
-r+='Привычки за последние 7 дней:\n';
-S.habits.forEach(x=>{let k=0;for(let i=0;i<7;i++)if(logged(ago(i),x.id))k++;r+=`- ${x.n}: ${k} из 7\n`});
-const ms=[];for(let i=6;i>=0;i--){const k=ago(i);if(S.mood[k])ms.push([k,S.mood[k]])}
-if(ms.length){const am=ms.filter(x=>x[1].am).map(x=>x[1].am),pm=ms.filter(x=>x[1].pm).map(x=>x[1].pm);
-r+=`Настроение за 7 дней (из 5): утро в среднем ${am.length?avg(am).toFixed(1):'—'}, итог дня ${pm.length?avg(pm).toFixed(1):'—'}, тяжёлых дней (1–2): ${pm.filter(v=>v<=2).length}\n`;
-ms.forEach(([k,M])=>{if(M.what||M.win||(M.tags&&M.tags.length))r+=`- ${k}${M.pm?' ('+M.pm+'/5)':''}${M.tags&&M.tags.length?' ['+M.tags.join(', ')+']':''}${M.what?': '+M.what:''}${M.win?' | получилось: '+M.win:''}\n`});
-const rl=ms.filter(x=>x[1].rule!==undefined);if(rl.length)r+=`Правило 4 часов: соблюдено ${rl.filter(x=>x[1].rule).length} из ${rl.length} смен\n`}
-r+=`Засчитано «получилось» за месяц: ${wins()}\n`;
-const fd=[];for(let i=1;i<=7;i++){const k=ago(i);if((S.food.log[k]||[]).length)fd.push(dayFood(k))}
-const N=norm();if(fd.length)r+=`Еда (прошлые 7 дней, записано ${fd.length}): в среднем ${Math.round(avg(fd.map(x=>x.k)))} ккал, белок ${Math.round(avg(fd.map(x=>x.p)))} г${N?' (норма '+N.k+' ккал, белок '+N.p+' г)':''}\n`;
-const W=S.food.weight;if(W.length){const l=W[W.length-1],f=W.find(x=>diff(x.d,l.d)<=28)||W[0];r+=`Вес: ${l.kg} кг (${l.d})${f!==l?', с '+f.d+': '+(l.kg-f.kg>0?'+':'')+(l.kg-f.kg).toFixed(1)+' кг':''}\n`}
-// в отчёт — только мои тренировки
-const tw=wp('me').filter(x=>x.done&&x.d>=ago(6));
-if(wp('me').length){r+=`Тренировки за 7 дней: ${tw.length}${tw.length?' ('+tw.map(x=>x.n).join(', ')+')':''}\n`;
-const recs=[];tw.forEach(w=>w.items.forEach((it,ii)=>it.sets.forEach((s,si)=>{if(s.ok&&isRec(w,ii,si))recs.push(exName(it)+' '+setTxt(exKind(it),s))})));
-if(recs.length)r+=`Рекорды за неделю: ${recs.join('; ')}\n`}
-// красная кнопка: в отчёт только число нажатий
-const pr=S.stop.presses;r+=`Красная кнопка: нажатий за 7 дней ${pr.filter(x=>x.t.slice(0,10)>=ago(6)).length}, за месяц ${pr.filter(x=>x.t.slice(0,10)>=S.start).length}\n`;
-return r+'Долги выплачены на '+(d.total?Math.round(pdx/d.total*100):0)+'%'}
+// ---------- отчёты для Claude: неделя (пн–вс, каждое воскресенье) и месяц (календарный, 1-го числа) ----------
+const DW=['вс','пн','вт','ср','чт','пт','сб'],MN=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'],MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const dlab=d=>d.slice(8)+'.'+d.slice(5,7)+' '+DW[pd(d).getDay()];
+const rlab=(a,b)=>`${+a.slice(8)}${a.slice(5,7)==b.slice(5,7)?'':' '+MG[+a.slice(5,7)-1]}–${+b.slice(8)} ${MG[+b.slice(5,7)-1]} ${b.slice(0,4)}`;
+// «15 мин» → 15, «до 2 ч» → 120: из названия уровня привычки
+const lvMin=l=>{const m=String(l||'').match(/(\d+[.,]?\d*)\s*(мин|ч)/);return m?Math.round(num(m[1])*(m[2]=='ч'?60:1)):0};
+const hm=m=>m>=60?Math.floor(m/60)+' ч'+(m%60?' '+m%60+' мин':''):m+' мин';
+function period(kind,mode){const t=today();
+if(kind=='w'){let a=weekStart(t);if(mode=='prev'||(mode=='auto'&&pd(t).getDay()==1))a=add(a,-7);return[a,add(a,6)]}
+let[y,m]=t.split('-').map(Number);if(mode=='prev'||(mode=='auto'&&+t.slice(8)<=3)){m--;if(!m){m=12;y--}}
+return[`${y}-${p(m)}-01`,dk(new Date(y,m,0))]}
+function reportFor(kind,a,b){const t=today(),e=b<t?b:t,days=[],fh=freeHab();for(let d=a;d<=e;d=add(d,1))days.push(d);
+let r=`${kind=='w'?'ОТЧЁТ НЕДЕЛИ':'ОТЧЁТ МЕСЯЦА'} · ${rlab(a,b)}${kind=='w'?' (пн–вс)':''}\nСоставлен ${nowS()}${b>t?' — период ещё идёт, данные по сегодня':''}\n`;
+if(S.shift)r+=`График 2/2: сегодня ${isShift(t)?'смена':'выходной'}\n`;
+if(PT()){const v=pathAll(e),dv=P100(v)-P100(pathAll(add(a,-1)));r+=`\nПУТЬ К ${PATH.end} (файл пути от ${PATH.v}): ${P100(v)}%, за период ${dv>=0?'+':''}${dv}%\n`;
+PATH.tracks.forEach(tr=>{const q=trProg(tr,e);if(tr.priv){r+=`- ${tr.n}: ${P100(q.v)}%\n`;return}
+if(tr.kind=='body'){r+=`- ${tr.n}: ${P100(q.v)}% · вес ${q.w} из ${tr.w1} кг · тренировок с ${PATH.start}: ${q.n} из ${tr.tr}\n`;return}
+r+=`- ${tr.n}: ${P100(q.v)}% · засчитано ${q.cnt} из ${tr.steps.length}`+(q.cur?` · сейчас «${q.cur.t}», срок ${q.cur.due}${q.cur.due<t?' (прошёл)':''}, по дням ${P100(q.part)}%`:'')+'\n'});
+const okL=[],dueL=[],late=[];PATH.tracks.forEach(tr=>(tr.steps||[]).forEach(x=>{if(x.ok&&x.ok>=a&&x.ok<=b)okL.push(x.t);if(!x.ok&&x.due>=a&&x.due<=b)dueL.push(x.t+' ('+x.due+')');if(!x.ok&&x.due<t)late.push(x.t+' ('+x.due+')')}));
+if(okL.length)r+=`Засчитано за период: ${okL.join('; ')}\n`;if(dueL.length)r+=`Сроки в периоде, не засчитано: ${dueL.join('; ')}\n`;if(late.length)r+=`Ждут проверки Claude (срок прошёл): ${late.join('; ')}\n`}
+r+='\n'+monthReport();
+// занятия по дням: привычки с уровнями; личная привычка «Получилось» — только итогом, не по дням
+const HB=S.habits.filter(h=>!fh||h.id!=fh.id);
+r+='\nЗАНЯТИЯ ПО ДНЯМ:\n'+days.map(d=>{const L=S.logs[d]||{},x=HB.filter(h=>L[h.id]).map(h=>h.n+(h.L.length>1?' '+h.L[(L[h.id].lvl||1)-1]:''));return `- ${dlab(d)}: ${x.length?x.join(' · '):'—'}`}).join('\n')+'\n';
+r+='Итого:\n'+S.habits.map(h=>{let n=0,mn=0;days.forEach(d=>{const x=(S.logs[d]||{})[h.id];if(x){n++;mn+=lvMin(h.L[(x.lvl||1)-1])}});return `- ${h.n}: ${n} из ${days.length} дн.`+(mn&&h.L.length>1?`, ≈ ${hm(mn)}`:'')}).join('\n')+'\n';
+// тренировки: мои — подробно, чужие — числом
+const TW=wp('me').filter(w=>w.done&&w.d>=a&&w.d<=e);let ton=0;
+r+=`\nТРЕНИРОВКИ (${TW.length}):\n`+(TW.length?TW.map(w=>{ton+=wStats(w).ton;return `- ${dlab(w.d)} ${w.t} «${w.n}»: `+w.items.map((it,ii)=>{const k=exKind(it),ok=it.sets.map((x,si)=>[x,si]).filter(z=>z[0].ok);
+return ok.length?exName(it)+' '+ok.map(([x,si])=>setTxt(k,x)+(isRec(w,ii,si)?' 🏆':'')).join(', '):null}).filter(Boolean).join('; ')+(w.note?' | заметка: '+w.note:'')}).join('\n')+`\nИтого: ${TW.length} трен., тоннаж ${fmt(ton)} кг\n`:'—\n');
+const OT=wl().filter(w=>w.done&&(w.p||'me')!='me'&&w.d>=a&&w.d<=e);if(OT.length){const c={};OT.forEach(w=>{const n=profOf(w.p).n;c[n]=(c[n]||0)+1});r+=`Тренировал других: ${Object.keys(c).map(n=>n+' '+c[n]).join(', ')}\n`}
+// еда по дням: что, сколько грамм, калории
+const N=norm();let fdN=0;const ks=[],ps=[];
+r+=`\nЕДА ПО ДНЯМ${N?' (норма '+N.k+' ккал, белок '+N.p+' г)':''}:\n`+days.map(d=>{const L=S.food.log[d]||[];if(!L.length)return `- ${dlab(d)}: не записано`;fdN++;const D=dayFood(d);ks.push(D.k);ps.push(D.p);
+return `- ${dlab(d)} — ${fmt(Math.round(D.k))} ккал, Б ${Math.round(D.p)} г: `+L.map(x=>`${x.n}${x.g?' '+x.g+' г':''} (${x.k})`).join(', ')}).join('\n')+'\n';
+r+=`Итого: записано ${fdN} из ${days.length} дн.`+(fdN?`, в среднем ${Math.round(avg(ks))} ккал, белок ${Math.round(avg(ps))} г`:'')+'\n';
+const Wt=S.food.weight.filter(x=>x.d>=a&&x.d<=e),pw=S.food.weight.filter(x=>x.d<a).pop();
+r+=`\nВЕС: ${Wt.length?Wt.map(x=>dlab(x.d)+' '+x.kg+' кг').join(' → '):'взвешиваний не было'}${pw?` (до периода: ${pw.kg} кг, ${pw.d})`:''}\n`;
+// настроение по дням
+const MD=days.filter(d=>S.mood[d]);
+r+='\nНАСТРОЕНИЕ ПО ДНЯМ (из 5):\n'+(MD.length?MD.map(d=>{const m=S.mood[d];return `- ${dlab(d)}: утро ${m.am||'—'}, итог ${m.pm||'—'}`+(m.tags&&m.tags.length?' ['+m.tags.join(', ')+']':'')+(m.what?' · '+m.what:'')+(m.win?' · получилось: '+m.win:'')+(m.rule!==undefined?' · правило 4 ч: '+(m.rule?'да':'нет'):'')}).join('\n')+'\n':'—\n');
+const am=MD.map(d=>S.mood[d].am).filter(Boolean),pm=MD.map(d=>S.mood[d].pm).filter(Boolean);
+if(MD.length)r+=`Итого: утро в среднем ${am.length?avg(am).toFixed(1):'—'}, итог ${pm.length?avg(pm).toFixed(1):'—'}, тяжёлых дней (1–2): ${pm.filter(v=>v<=2).length}\n`;
+// остальное — числами
+const G=mainG(),OG=S.goals.filter(g=>!g.arch&&!g.priv&&(g.type=='main'||g.type=='streak'||g.type=='num'));
+if(OG.length)r+='\nМОИ ЦЕЛИ:\n'+OG.map(g=>g.type=='num'?`- ${g.t}: старт ${g.from??'—'}, сейчас ${lastW()??'—'} кг, срок ${g.due||'—'}${numDone(g)?', выполнено':''}`:g.type=='streak'?`- ${g.t}: серия ${sCur(g)} из ${g.n}${sRuns(g).done?', выполнено':''}`:`- ${g.t}${g===G?' (главная)':''}: ${gPct(g)}%${g.done?', выполнено':''}`).join('\n')+'\n';
+r+=`\nЗАДАЧИ: сделано за период ${S.tasks.filter(x=>x.done&&x.done>=a&&x.done<=e).length}, открыто ${S.tasks.filter(x=>x.k!='note'&&!x.done).length} (тексты остаются в телефоне)\n`;
+r+=`КРАСНАЯ КНОПКА: нажатий за период ${S.stop.presses.filter(x=>x.t.slice(0,10)>=a&&x.t.slice(0,10)<=e).length}\n`;
+r+=`КОПИЛКА за период: ${piggy(0).filter(x=>x[0]>=a&&x[0]<=e).length}\n`;
+const db=S.debt,pdx=db.paid.reduce((x,y)=>x+y.s,0),pp=db.paid.filter(x=>x.d.slice(0,10)>=a&&x.d.slice(0,10)<=e).length;
+return r+`ДОЛГИ: выплачено ${db.total?Math.round(pdx/db.total*100):0}%${pp?', выплат за период: '+pp:''}`}
+// составить отчёт, скопировать и показать текст (на случай, если копирование не сработает)
+function sendReport(kind){const mode=val('rp')||'auto',[a,b]=period(kind,mode),txt=reportFor(kind,a,b);
+S.rs=Object.assign({},S.rs);if(kind=='w')S.rs.w=a;else S.rs.m=a.slice(0,7);store();
+if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('Скопировано, вставь в чат с Claude'),()=>toast('Выдели текст и скопируй'));
+openSheet((kind=='w'?'Отчёт недели · ':'Отчёт месяца · ')+rlab(a,b),`<div class="mu" style="margin-bottom:8px">Текст уже скопирован. Если нет — выдели его здесь и скопируй.</div><textarea class="in mono" id="f_rep" rows="14" readonly>${esc(txt)}</textarea>`,null,null)}
 let tt;function toast(m){const e=$('toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),1800)}
 function copyIO(text){const io=$('io');io.value=text;io.select();
 if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Скопировано'),()=>toast('Выдели текст и скопируй'))}
@@ -1551,7 +1577,8 @@ case 'snow':sync();return;
 case 'sout':if(!confirm('Выйти из аккаунта? Данные на этом устройстве останутся.'))return;Cloud.signOut().then(()=>{syncSt='';render()});return;
 case 'newm':if(!confirm('Начать новый месяц? Все отметки и цели сохранятся, месяц для отчёта Claude начнётся с сегодня.'))return;
 S.start=today();break;
-case 'rep':copyIO(report());return;
+case 'repw':sendReport('w');return;
+case 'repm':sendReport('m');return;
 case 'exp':S.bk=today();save();copyIO(JSON.stringify(S));toast('Копия готова. Сохрани её в Заметки');return;
 case 'imp':{let o;try{o=JSON.parse($('io').value)}catch(x){alert('Не удалось прочитать текст');return}
 if(!o||!o.v||!o.goals){alert('Это не копия данных');return}
