@@ -93,6 +93,7 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mu);m
 .pnum{display:flex;justify-content:space-between;align-items:baseline}
 .pnum b{font-size:32px;font-weight:900;letter-spacing:-1px}
 .up{color:var(--ok);font-weight:800;font-size:14px}
+.nrep{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--soft);font-size:14px;line-height:1.5}
 .why2{display:block;margin-top:8px;font-style:italic;color:var(--mu);font-size:14px;line-height:1.4}
 .trk .th2{display:flex;align-items:center;gap:10px}
 .trk .pct{font-size:22px;font-weight:900}
@@ -665,7 +666,7 @@ const G=mainG(),gs=G?G.steps[curStep(G)]:null,PP=PT();
 if(PP){const v=pathAll(t),nt=PP.tracks.find(x=>x.id=='net'),c=nt&&trProg(nt,t).cur,F=freeStreaks(),ft=PP.tracks.find(x=>x.kind=='days'),nx=ft&&ft.ladder.find(n=>n>F.cur);
 h+=`<div class="hero" data-a="tab" data-t="goals">${ring(P100(v),86,9,'#fff','rgba(255,255,255,.25)',20)}<div class="info"><b>Путь к ${fmtD(PP.end)}: ${P100(v)}%</b>`+
 `<p>${c?'Сейчас: '+esc(c.t)+' · '+(c.due<t?'жду итог':dueTxt(c.due)):'Сети: все главы засчитаны'}</p>`+
-(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+(nx?`<span class="chip">🔥 ${F.cur} из ${nx}</span>`:'')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`}
+(anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+(nx?`<span class="chip">🔥 ${F.cur} из ${nx}</span>`:'')+`<span class="chip">📮 отчёт: ${nextRep().short}</span><span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`}
 else h+=`<div class="hero" data-a="tab" data-t="goals">${G?ring(gPct(G),86,9,'#fff','rgba(255,255,255,.25)',20):ring(0,86,9,'#fff','rgba(255,255,255,.25)',20,'—')}<div class="info"><b>${G?'🎯 '+esc(G.t):'Главная цель не выбрана'}</b>`+
 `<p>${G?(gs?'Сейчас: '+esc(gs.x)+(gs.due?' · '+dueTxt(gs.due):''):''):'Выбери её во вкладке «Цели»'}</p>`+
 (anc.length?`<span class="chip">Якоря: ${anc.filter(a=>T[a.id]).length} из ${anc.length}</span>`:'')+(S.shift?`<span class="chip">${shiftLabel(t)}</span>`:'')+S.goals.filter(g=>g.type=='streak'&&!g.arch&&!sRuns(g).done).map(g=>`<span class="chip">🔥 ${sCur(g)} из ${g.n}</span>`).join('')+`<span class="chip">День ${Math.min(n,30)} из 30</span></div></div>`;
@@ -898,12 +899,18 @@ let run=0;for(let x=add(P.start,-60);x<=today();x=add(x,1)){if(logged(x,h.id)){r
 let y=logged(today(),h.id)?today():ago(1);while(logged(y,h.id)){R.cur++;y=add(y,-1)}return R}
 const segBar=(n,fill,col)=>`<div class="segs" style="--sc:${col};gap:${n>24?2:4}px">`+Array.from({length:n},(_,i)=>`<i><b style="width:${Math.max(0,Math.min(1,fill-i))*100}%"></b></i>`).join('')+'</div>';
 const P100=v=>Math.round(v*100);
+function nextRep(){const t=today(),RS=S.rs||{},ws=weekStart(t),dw=pd(t).getDay(),D=d=>cap(pd(d).toLocaleDateString('ru-RU',{weekday:'long'}))+', '+fmtD(d);
+let w=(dw==0&&RS.w!=ws)?'сегодня':(dw==1&&RS.w!=add(ws,-7))?'сегодня, за прошлую неделю':D(dw==0?add(ws,13):add(ws,6)),ws2=dw==0&&RS.w==ws?add(ws,13):dw==0?t:add(ws,6);
+let[y,m]=t.split('-').map(Number),pm=(m==1?y-1+'-12':y+'-'+p(m-1)),mo=+t.slice(8)<=3&&RS.m!=pm?'сегодня':fmtD(dk(new Date(y,m,1)));
+return{w,mo,short:w.startsWith('сегодня')?'сегодня':pd(ws2).toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'short'})}}
 function primeCard(){const P=PT(),t=today(),v=pathAll(t),ws=weekStart(t),dv=P100(v)-P100(pathAll(add(ws,-1)));
 const nowL=P.tracks.map(tr=>{const p=trProg(tr,t);return `<li>${tr.ic} ${tr.kind=='body'?fmt(p.w)+' кг':tr.kind=='days'?p.n+' дн.':p.cur?esc(p.cur.t.split(/[·:]/)[0].trim()):'готово'}</li>`}).join('');
 return `<div class="pr"><small>Ты · сейчас и ${fmtD(P.end)} ${P.end.slice(0,4)}</small><h1>Что тебя отделяет?</h1>`+
 `<div class="pc"><div><small class="mu">СЕГОДНЯ</small><div class="pers" style="--pcl:#9ca3af"><i></i><b></b></div><div class="lbl">Текущая точка</div><ul>${nowL}</ul></div>`+
 `<div class="me2"><small class="mu">ПРАЙМОВАЯ ВЕРСИЯ</small><div class="pers" style="--pcl:var(--tx)"><i></i><b></b></div><div class="lbl">Кем станешь</div><ul>${P.tracks.map(tr=>`<li>${tr.ic} ${esc(tr.prime)}</li>`).join('')}</ul></div></div>`+
-segBar(20,v*20,'var(--tx)')+`<div class="pnum"><b>${P100(v)}%</b><span class="${dv>0?'up':'mu'}">${dv>0?'▲ +'+dv+'% на этой неделе':'на этой неделе пока без изменений'}<br><small>с пн, ${fmtD(ws)}</small></span></div>`+
+segBar(20,v*20,'var(--tx)')+(()=>{const lw=P100(pathAll(add(ws,-1)))-P100(pathAll(add(ws,-8))),NR=nextRep();
+return `<div class="pnum"><b>${P100(v)}%</b><span style="text-align:right"><span class="${lw>0?'up':'mu'}">${lw>0?'▲ +'+lw+'%':'+0%'} за прошлую неделю</span><br><small class="mu">${fmtD(add(ws,-7))} – ${fmtD(add(ws,-1))}</small><br><span class="${dv>0?'up':'mu'}" style="font-size:13px">${dv>0?'+'+dv:'+0'}% на этой неделе</span></span></div>`+
+`<div class="nrep">📮 Следующий отчёт недели: <b>${NR.w}</b><br>Отчёт месяца: <b>${NR.mo}</b></div>`})()+
 `<button class="plain why2" data-a="gwhy">«${esc(S.plan.why||'Напиши, какой жизни хочешь')}»</button></div>`}
 function trackCard(tr){const t=today(),p=trProg(tr,t),dv=P100(p.v)-P100(trProg(tr,add(weekStart(t),-1)).v);let bar,sub;
 if(tr.steps){const N=tr.steps.length;bar=segBar(N,p.v*N,tr.c);
